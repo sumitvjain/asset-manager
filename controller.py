@@ -1,3 +1,58 @@
+from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent
+from PySide2. QtCore import Qt, QUrl
+import sys, os
+
+# class TreeWidgetDragDropHandler():
+#     def __init__(self, view):
+#        super().__init__()
+#        self.view = view
+
+#     #    self.view.setAcceptDrops(True)
+
+#     def dragEnterEvent(self, event:QDragEnterEvent):
+#         if event.mimeData().hasUrls():
+#             print("dragEnterEvent --------- ")
+#             event.acceptProposedAction()
+#         else:
+#             event.ignore()
+    
+#     def dragMoveEvent(self, e:QDragMoveEvent):
+#         if e.mimeData().hasUrls():
+#             print("dragMoveEvent --------- ")
+#             e.acceptProposedAction()
+#         else:
+#             e.ignore()
+
+#     def dropEvent(self, event):
+#         if event.mimeData().hasUrls():
+#             drop_urls = event.mimeData().urls()
+#             print("drop_urls --- ", drop_urls)
+#             url = event.mimeData().urls()[0]
+#             folder_path = url.toLocalFile()
+#             if os.path.isdir(folder_path):
+#                 if len(os.listdir(folder_path)) > 0:
+#                     dir_path = url.toLocalFile()
+#                     print("dir_path path ---- ", dir_path)
+
+#                     dir_lst_itms = os.listdir(dir_path)
+                    
+#                     proj_len = len(dir_lst_itms)
+#                     print("proj_len --- ", proj_len)
+
+#                     for dir_itm in dir_lst_itms:
+#                         print(dir_itm)
+
+                    
+
+#                     event.accept()
+#                 else:
+#                     print("Directory check complete: no content found.")
+#             else:
+#                 print("This is not directory path")
+#                 event.ignore()
+
+#         else:
+#             event.ignore()
 
 
 
@@ -6,6 +61,8 @@ class LogicHandler():
         self.model = model
         self.view = view
         self.signal_slot()
+        # self.tree_wid_drag_drop_handler = TreeWidgetDragDropHandler(view)
+        # self.view.tree_wid.handler = self.tree_wid_drag_drop_handler
 
     def signal_slot(self):
         

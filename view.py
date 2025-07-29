@@ -1,28 +1,90 @@
 from PySide2.QtWidgets import (
-    QMainWindow, QSizePolicy, QSpacerItem,
-    QWidget,
+    QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
+    QWidget, 
     QVBoxLayout, 
     QHBoxLayout, 
     QApplication, 
     QAction,
     QListWidget,
     QListWidgetItem,
-    QTreeWidget,
     QTreeWidgetItem,
+    QTreeWidget,
     QLabel,
     QPushButton,
     QTabWidget
 )
-import sys
+from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent
+from PySide2. QtCore import Qt, QUrl
+import sys, os
 
 
+
+class TreeWidgetDragDrop(QTreeWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event:QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            print("dragEnterEvent --------- ")
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+    
+    def dragMoveEvent(self, e:QDragMoveEvent):
+        if e.mimeData().hasUrls():
+            print("dragMoveEvent --------- ")
+            e.acceptProposedAction()
+        else:
+            e.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            drop_urls = event.mimeData().urls()
+            url = drop_urls[0]
+            path = url.toLocalFile()
+
+            if os.path.isdir(path):
+                if len(os.listdir(path)) > 0:
+                    self.clear()
+
+                    base_nm = os.path.basename(path)
+                    tree_item = QTreeWidgetItem([base_nm, "Folder"])
+                    self.addTopLevelItem(tree_item)
+                    
+                    self.build_tree_view(path, tree_item)                  
+                    event.accept()                                  
+                else:
+                    print("Directory check complete: no content found.")
+            else:
+                print("This is not directory path")
+                event.ignore()
+        else:
+            event.ignore()
+
+
+    def build_tree_view(self, path, tree_item):
+        dir_contents = os.listdir(path)
+
+        for item in sorted(dir_contents):
+            full_path = os.path.join(path, item)
+
+            if os.path.isdir(full_path):
+                folder_item = QTreeWidgetItem([item , "Folder"])
+                tree_item.addChild(folder_item)
+                self.build_tree_view(full_path, folder_item)
+            
+            elif os.path.isfile(full_path):
+                file_item = QTreeWidgetItem([item, "File"])
+                tree_item.addChild(file_item)
 
 
 class LayoutManager(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Asset Manager")
-        self.setGeometry(400,200, 1000, 450)
+        self.setGeometry(100,50, 1000, 450)
 
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
@@ -72,7 +134,8 @@ class LayoutManager(QMainWindow):
 
 
     def add_tree_wid(self):
-        self.tree_wid = QTreeWidget()
+        # self.tree_wid = QTreeWidget()
+        self.tree_wid = TreeWidgetDragDrop()
         self.wid_hlay.addWidget(self.tree_wid)
 
     def add_lst_wid(self):
