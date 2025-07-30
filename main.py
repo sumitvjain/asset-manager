@@ -33,6 +33,7 @@ class TreeWidgetDragDrop(QTreeWidget):
         super().__init__()
 
         self.setAcceptDrops(True)
+        self.itemClicked.connect(self.tree_item_clicked)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -71,6 +72,27 @@ class TreeWidgetDragDrop(QTreeWidget):
                 event.ignore()
         else:
             event.ignore()
+
+
+    
+    def tree_item_clicked(self):
+        pass
+
+    # @Slot(QTreeWidgetItem, int)
+    # def _on_item_clicked(self, item: QTreeWidgetItem, column: int):
+    #     stored_path = item.data(0, Qt.UserRole)
+    #     if stored_path:
+    #         self.itemPathClicked.emit(stored_path)
+    #         return
+
+    #     # Fallback: build a pseudo-path from the hierarchy (if no stored path)
+    #     parts = []
+    #     it = item
+    #     while it is not None:
+    #         parts.append(it.text(0))
+    #         it = it.parent()
+    #     parts.reverse()
+    #     self.itemPathClicked.emit(os.path.sep.join(parts))
 
 
     def build_tree_view(self, path, tree_item):
@@ -217,37 +239,29 @@ class LogicHandler():
         msg = self.model.get_file_data()
         print(msg)
 
-
     def open_folder(self):
         msg = self.model.get_folder_data()
         print(msg)
-
 
     def save_file(self):
         msg = self.model.save_execute()
         print(msg)
 
-
     def save_as_file(self):
         msg = self.model.save_as_execute()
         print(msg)
-
-
 
     def undo_last_action(self):
         msg = self.model.undo_operation()
         print(msg)
 
-
     def redo_last_action(self):
         msg = self.model.redo_operation()
         print(msg)
 
-
     def cut_selected_item(self):
         msg = self.model.cut_operation()
         print(msg)
-
 
     def copy_selected_item(self):
         msg = self.model.copy_operation()
