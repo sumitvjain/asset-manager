@@ -52,9 +52,9 @@ class TreeWidgetDragDrop(QTreeWidget):
                     base_nm = os.path.basename(path)
                     tree_item = QTreeWidgetItem([base_nm, "Folder"])
                     self.addTopLevelItem(tree_item)
-                    
-                    self.build_tree_view(path, tree_item)                  
-                    event.accept()                                  
+
+                    self.build_tree_view(path, tree_item)
+                    event.accept()
                 else:
                     print("Directory check complete: no content found.")
             else:
@@ -78,6 +78,31 @@ class TreeWidgetDragDrop(QTreeWidget):
             elif os.path.isfile(full_path):
                 file_item = QTreeWidgetItem([item, "File"])
                 tree_item.addChild(file_item)
+
+
+# class TreeWidgetDragDrop(QTreeWidget):
+#     def __init__(self, handler=None):
+#         super().__init__()
+#         self.setAcceptDrops(True)
+#         self.handler = handler
+
+#     def dragEnterEvent(self, event):
+#         if self.handler:
+#             self.handler.dragEnterEvent(event)
+#         else:
+#             super().dragEnterEvent(event)
+
+#     def dragMoveEvent(self, event):
+#         if self.handler:
+#             self.handler.dragMoveEvent(event)
+#         else:
+#             super().dragMoveEvent(event)
+
+#     def dropEvent(self, event):
+#         if self.handler:
+#             self.handler.dropEvent(event)
+#         else:
+#             super().dropEvent(event)
 
 
 class LayoutManager(QMainWindow):
@@ -137,6 +162,7 @@ class LayoutManager(QMainWindow):
         # self.tree_wid = QTreeWidget()
         self.tree_wid = TreeWidgetDragDrop()
         self.wid_hlay.addWidget(self.tree_wid)
+        
 
     def add_lst_wid(self):
         self.lst_wid = QListWidget()
