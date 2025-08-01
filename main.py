@@ -22,18 +22,20 @@ from PySide2.QtWidgets import (
     QPushButton,
     QTabWidget
 )
-from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent
-from PySide2. QtCore import Qt, QUrl
+from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont
+from PySide2. QtCore import Qt, QUrl, Slot, Signal
 import sys, os
+import random
 
-
+DRIVE = "E:\\"
 
 class TreeWidgetDragDrop(QTreeWidget):
+    itemPathClicked = Signal(str)
     def __init__(self):
         super().__init__()
 
         self.setAcceptDrops(True)
-        self.itemClicked.connect(self.tree_item_clicked)
+        # self.itemClicked.connect(self.on_item_clicked)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -74,25 +76,21 @@ class TreeWidgetDragDrop(QTreeWidget):
             event.ignore()
 
 
-    
-    def tree_item_clicked(self):
-        pass
-
     # @Slot(QTreeWidgetItem, int)
-    # def _on_item_clicked(self, item: QTreeWidgetItem, column: int):
-    #     stored_path = item.data(0, Qt.UserRole)
-    #     if stored_path:
-    #         self.itemPathClicked.emit(stored_path)
-    #         return
+    # def on_item_clicked(self, item: QTreeWidgetItem, column: int):
 
-    #     # Fallback: build a pseudo-path from the hierarchy (if no stored path)
     #     parts = []
     #     it = item
+  
     #     while it is not None:
     #         parts.append(it.text(0))
     #         it = it.parent()
+ 
     #     parts.reverse()
-    #     self.itemPathClicked.emit(os.path.sep.join(parts))
+        
+    #     if parts[-1] == 'render':
+    #         self.ren_dir_path = os.path.join(DRIVE, *parts)
+
 
 
     def build_tree_view(self, path, tree_item):
@@ -120,6 +118,7 @@ class LayoutManager(QMainWindow):
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
         self.wid_hlay = QHBoxLayout()
+        self.tree_wid = None
 
         widget.setLayout(self.mainvlay)
         self.setCentralWidget(widget)
@@ -130,6 +129,10 @@ class LayoutManager(QMainWindow):
         self.add_tab_wid()
 
         self.mainvlay.addLayout(self.wid_hlay)
+
+
+    def add_ren_wid(self, info_wid_lst):
+        self.lst_wid.addItems(info_wid_lst)
 
 
     def add_menu(self):
@@ -180,7 +183,6 @@ class LayoutManager(QMainWindow):
         self.tab_wid = QTabWidget()
 
         self.tab_viewer = QWidget()
-
 
         info_hlay = QHBoxLayout()
         self.lbl_width = QLabel("Width: ")
@@ -234,6 +236,18 @@ class LogicHandler():
         self.view.copy_action.triggered.connect(self.copy_selected_item)
         self.view.paste_action.triggered.connect(self.paste_item)
 
+        self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
+
+
+
+    def on_item_clicked(self, item, column):
+        info_wid_lst = self.model.get_ren_info_wid(item, column)
+        if info_wid_lst:
+            self.view.add_ren_wid(info_wid_lst)
+        else:
+            print("Render directory is empty")
+
+
 
     def open_file(self):
         msg = self.model.get_file_data()
@@ -272,9 +286,83 @@ class LogicHandler():
         print(msg)
 
 
+
+class RenderVersionWidget(QWidget):
+    def __init__(self, ver_path):
+        super().__init__()
+        self.ver_path = ver_path
+
+        self.mainhlay = QHBoxLayout(self)
+        self.add_widgets()
+        self.setLayout(self.mainhlay)
+
+    def add_widgets(self):
+        image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
+        pixmap = QPixmap(image_full_path)
+        scaled = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        
+        lbl_thumbnil = QLabel()
+        lbl_thumbnil.setPixmap(scaled)
+        lbl_thumbnil.setAlignment(Qt.AlignCenter)
+
+        
+        vlay = QVBoxLayout()
+        image_nm = os.listdir(self.ver_path)[0]
+        lbl_title = QLabel(image_nm.split('.')[0])
+        font = QFont()
+        font.setPointSize(14)
+        lbl_title.setFont(font)
+
+
+        first_frame = random.randint(1001, 1009)
+        last_frame = random.randint(1100, 1200)
+        lbl_info = QLabel(
+            f"""Project - {self.ver_path.split(os.sep)[2]} \n 
+            Shot - {self.ver_path.split(os.sep)[5]} \n
+            Frame range - {first_frame} - {last_frame}"""
+        )
+        font.setPointSize(11)
+        lbl_info.setFont(font)
+
+        vlay.addWidget(lbl_title)
+        vlay.addWidget(lbl_info)
+
+        self.mainhlay.addLayout(vlay)
+
+
+
+
 class DataModel():
     def __init__(self):
         pass
+
+    # @Slot(QTreeWidgetItem, int)
+    def get_ren_info_wid(self, item: QTreeWidgetItem, column: int):
+
+        parts = []
+        it = item
+  
+        while it is not None:
+            parts.append(it.text(0))
+            it = it.parent()
+ 
+        parts.reverse()
+        
+        if parts[-1] == 'render':
+            self.ren_dir_path = os.path.join(DRIVE, *parts)
+
+            ver_widget_lst = []
+            for ver in os.listdir(self.ren_dir_path):
+                ver_wid = RenderVersionWidget(os.path.join(self.ren_dir_path, ver))
+                ver_widget_lst.append(ver_wid)
+
+            if ver_widget_lst:
+                return ver_widget_lst
+            
+
+
+
 
     def get_file_data(self):
         return "file has been opened"
@@ -315,5 +403,13 @@ if __name__ == "__main__":
 
 
 
+# des_path = r"E:\demo_projects\aawara\seq\aaw_000\aaw_000_0000\render"
+# image_path = r"E:\demo_projects\aawara\seq\aaw_000\aaw_000_0000\scan\Capture001.png"
+# import os
+# import shutil
+# for i in range(1,10):
+#     destination_path = os.path.join(des_path, f"v00{i}")
+#     os.makedirs(destination_path)
+#     shutil.copy2(image_path, destination_path)
 
 
