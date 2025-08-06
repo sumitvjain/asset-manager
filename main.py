@@ -20,7 +20,8 @@ from PySide2.QtWidgets import (
     QTreeWidget,
     QLabel,
     QPushButton,
-    QTabWidget
+    QTabWidget,
+    QSplitter
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont
 from PySide2. QtCore import Qt, QUrl, Slot, Signal
@@ -117,7 +118,8 @@ class LayoutManager(QMainWindow):
 
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
-        self.wid_hlay = QHBoxLayout()
+        self.splitter = QSplitter(Qt.Horizontal)
+        # self.wid_hlay = QHBoxLayout()
         self.tree_wid = None
 
         widget.setLayout(self.mainvlay)
@@ -128,11 +130,21 @@ class LayoutManager(QMainWindow):
         self.add_lst_wid()
         self.add_tab_wid()
 
-        self.mainvlay.addLayout(self.wid_hlay)
+        #self.mainvlay.addLayout(self.wid_hlay)
+        # self.mainvlay.addLayout(self.splitter)
+        self.mainvlay.addWidget(self.splitter)
 
 
     def add_ren_wid(self, info_wid_lst):
-        self.lst_wid.addItems(info_wid_lst)
+
+        for widget in info_wid_lst:
+            list_item = QListWidgetItem()
+            list_item.setSizeHint(widget.sizeHint())
+            self.lst_wid.addItem(list_item)
+            self.lst_wid.setItemWidget(list_item, widget)
+
+    def clear_lst_wid(self):
+        self.lst_wid.clear()
 
 
     def add_menu(self):
@@ -170,15 +182,18 @@ class LayoutManager(QMainWindow):
     def add_tree_wid(self):
         # self.tree_wid = QTreeWidget()
         self.tree_wid = TreeWidgetDragDrop()
-        self.wid_hlay.addWidget(self.tree_wid)
+        #self.wid_hlay.addWidget(self.tree_wid)
+        self.splitter.addWidget(self.tree_wid)
         
 
     def add_lst_wid(self):
         self.lst_wid = QListWidget()
-        self.wid_hlay.addWidget(self.lst_wid)
+        #self.wid_hlay.addWidget(self.lst_wid)
+        self.splitter.addWidget(self.lst_wid)
 
     def add_tab_wid(self):
-        right_vlay = QVBoxLayout()
+        right_widget = QWidget()
+        right_vlay = QVBoxLayout(right_widget)
         tab_vlay = QVBoxLayout()
         self.tab_wid = QTabWidget()
 
@@ -212,7 +227,10 @@ class LayoutManager(QMainWindow):
         right_vlay.addLayout(tab_vlay)
         right_vlay.addLayout(btn_hlay)
 
-        self.wid_hlay.addLayout(right_vlay)
+        # self.wid_hlay.addLayout(right_vlay)
+        
+   
+        self.splitter.addWidget(right_widget)
 
 
 class LogicHandler():
@@ -241,11 +259,15 @@ class LogicHandler():
 
 
     def on_item_clicked(self, item, column):
+        print("item --- ", item)
+        print("column --- ", column)
         info_wid_lst = self.model.get_ren_info_wid(item, column)
+        print("info_wid_lst --- ", info_wid_lst)
+
         if info_wid_lst:
             self.view.add_ren_wid(info_wid_lst)
         else:
-            print("Render directory is empty")
+            self.view.clear_lst_wid()
 
 
 
@@ -300,20 +322,17 @@ class RenderVersionWidget(QWidget):
         image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
         pixmap = QPixmap(image_full_path)
         scaled = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        
+    
         lbl_thumbnil = QLabel()
         lbl_thumbnil.setPixmap(scaled)
         lbl_thumbnil.setAlignment(Qt.AlignCenter)
-
-        
+  
         vlay = QVBoxLayout()
         image_nm = os.listdir(self.ver_path)[0]
         lbl_title = QLabel(image_nm.split('.')[0])
         font = QFont()
         font.setPointSize(14)
         lbl_title.setFont(font)
-
 
         first_frame = random.randint(1001, 1009)
         last_frame = random.randint(1100, 1200)
@@ -329,7 +348,6 @@ class RenderVersionWidget(QWidget):
         vlay.addWidget(lbl_info)
 
         self.mainhlay.addLayout(vlay)
-
 
 
 
