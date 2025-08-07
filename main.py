@@ -143,6 +143,12 @@ class LayoutManager(QMainWindow):
             self.lst_wid.addItem(list_item)
             self.lst_wid.setItemWidget(list_item, widget)
 
+        self.lst_wid.setSpacing(10)
+
+        print('self.scroll --- ', self.scroll)
+        print('self.scroll.viewport  --- ', self.scroll.viewport())
+        print('self.scroll.viewport.widht --- ', self.scroll.viewport().width())
+
     def clear_lst_wid(self):
         self.lst_wid.clear()
 
@@ -312,24 +318,46 @@ class LogicHandler():
 class RenderVersionWidget(QWidget):
     def __init__(self, ver_path):
         super().__init__()
+
+        # self.fixed_width = 400
+        # self.setFixedWidth(self.fixed_width)
+
+        self.set_style_sheet()   
         self.ver_path = ver_path
 
         self.mainhlay = QHBoxLayout(self)
+        self.mainhlay.setContentsMargins(0,0,0,0)
+        self.mainhlay.setSpacing(0)
         self.add_widgets()
         self.setLayout(self.mainhlay)
 
+    def set_style_sheet(self):
+        self.setStyleSheet("""
+                border: 3px grey;
+                background-color: grey;
+        """)
+
+
     def add_widgets(self):
+        hlay = QHBoxLayout()
+
         image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
         pixmap = QPixmap(image_full_path)
-        scaled = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        scaled = pixmap.scaled(60, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
     
         lbl_thumbnil = QLabel()
         lbl_thumbnil.setPixmap(scaled)
         lbl_thumbnil.setAlignment(Qt.AlignCenter)
+
+        hlay.addWidget(lbl_thumbnil)
   
+        
+
         vlay = QVBoxLayout()
+        vlay.setContentsMargins(2,0,0,0)
+
         image_nm = os.listdir(self.ver_path)[0]
-        lbl_title = QLabel(image_nm.split('.')[0])
+        lbl_title = QLabel(f"  {image_nm.split('.')[0]}  ")
         font = QFont()
         font.setPointSize(14)
         lbl_title.setFont(font)
@@ -337,9 +365,9 @@ class RenderVersionWidget(QWidget):
         first_frame = random.randint(1001, 1009)
         last_frame = random.randint(1100, 1200)
         lbl_info = QLabel(
-            f"""Project - {self.ver_path.split(os.sep)[2]} \n 
-            Shot - {self.ver_path.split(os.sep)[5]} \n
-            Frame range - {first_frame} - {last_frame}"""
+            f"""  Project - {self.ver_path.split(os.sep)[2]}
+        Shot - {self.ver_path.split(os.sep)[5]}
+        Frame range - {first_frame} - {last_frame}  """
         )
         font.setPointSize(11)
         lbl_info.setFont(font)
@@ -347,7 +375,9 @@ class RenderVersionWidget(QWidget):
         vlay.addWidget(lbl_title)
         vlay.addWidget(lbl_info)
 
-        self.mainhlay.addLayout(vlay)
+        hlay.addLayout(vlay)
+
+        self.mainhlay.addLayout(hlay)
 
 
 
@@ -373,6 +403,7 @@ class DataModel():
             ver_widget_lst = []
             for ver in os.listdir(self.ren_dir_path):
                 ver_wid = RenderVersionWidget(os.path.join(self.ren_dir_path, ver))
+                # ver_wid.setStyleSheet("border: 3px double gray;")
                 ver_widget_lst.append(ver_wid)
 
             if ver_widget_lst:
