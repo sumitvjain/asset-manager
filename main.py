@@ -7,6 +7,7 @@
 # from model import DataModel
 # from controller import LogicHandler
 
+from  pprint import pprint
 from PySide2.QtWidgets import (
     QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
     QWidget, 
@@ -21,7 +22,12 @@ from PySide2.QtWidgets import (
     QLabel,
     QPushButton,
     QTabWidget,
-    QSplitter
+    QSplitter,
+    QScrollArea,
+    QGridLayout,
+    QSizePolicy,
+    QMenu
+    
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont
 from PySide2. QtCore import Qt, QUrl, Slot, Signal
@@ -77,21 +83,31 @@ class TreeWidgetDragDrop(QTreeWidget):
             event.ignore()
 
 
-    # @Slot(QTreeWidgetItem, int)
-    # def on_item_clicked(self, item: QTreeWidgetItem, column: int):
+    def enterEvent(self, event):
+        """When mouse enters widget"""
+        self.setStyleSheet("""
+            QTreeWidget::item {
+                background-color: #F0F8FF;
 
-    #     parts = []
-    #     it = item
-  
-    #     while it is not None:
-    #         parts.append(it.text(0))
-    #         it = it.parent()
- 
-    #     parts.reverse()
-        
-    #     if parts[-1] == 'render':
-    #         self.ren_dir_path = os.path.join(DRIVE, *parts)
+            }
+            QTreeWidget::item:hover {
+                background-color: #778899;
+            }
+            QTreeWidget::item:selected {
+                background-color: #5F9EA0;
+                color: black;
+            }
+        """)
+        super().enterEvent(event)
 
+    def leaveEvent(self, event):
+        """When mouse leaves widget"""
+        self.setStyleSheet("""
+            QTreeWidget::item {
+                background-color: #F0F8FF;
+            }
+        """)
+        super().leaveEvent(event)
 
 
     def build_tree_view(self, path, tree_item):
@@ -116,6 +132,7 @@ class LayoutManager(QMainWindow):
         self.setWindowTitle("Asset Manager")
         self.setGeometry(100,50, 1000, 450)
 
+        self.scroll = QScrollArea()
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
         self.splitter = QSplitter(Qt.Horizontal)
@@ -145,9 +162,9 @@ class LayoutManager(QMainWindow):
 
         self.lst_wid.setSpacing(10)
 
-        print('self.scroll --- ', self.scroll)
-        print('self.scroll.viewport  --- ', self.scroll.viewport())
-        print('self.scroll.viewport.widht --- ', self.scroll.viewport().width())
+        # print('self.scroll --- ', self.scroll)
+        # print('self.scroll.viewport  --- ', self.scroll.viewport())
+        # print('self.scroll.viewport.width --- ', self.scroll.viewport().width())
 
     def clear_lst_wid(self):
         self.lst_wid.clear()
@@ -263,6 +280,9 @@ class LogicHandler():
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
 
 
+    def load_exr_in_viewer(self):
+        print("this is load_exr_in_viewer")
+
 
     def on_item_clicked(self, item, column):
         print("item --- ", item)
@@ -314,13 +334,13 @@ class LogicHandler():
         print(msg)
 
 
-
 class RenderVersionWidget(QWidget):
     def __init__(self, ver_path):
         super().__init__()
 
         # self.fixed_width = 400
         # self.setFixedWidth(self.fixed_width)
+
 
         self.set_style_sheet()   
         self.ver_path = ver_path
@@ -331,10 +351,72 @@ class RenderVersionWidget(QWidget):
         self.add_widgets()
         self.setLayout(self.mainhlay)
 
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.populate_menu_actions)
+
+        # self.context_menu_callback()
+
+        
+
+
+    def populate_menu_actions(self, pos):
+        print('pos --- ', pos)
+        self.menu = QMenu(self)
+        self.menu.setStyleSheet("""
+            QMenu {
+                background-color: #f9f9f9;  /* Light background */
+                border: 1px solid #ccc;     /* Light gray border */
+                padding: 4px;
+            }
+
+            QMenu::item {
+                background-color: transparent;
+                padding: 4px 20px;
+            }
+
+            QMenu::item:selected {
+                background-color: #e0e0e0;  /* Light gray when hovered */
+                color: black;
+            }
+
+            QMenu::separator {
+                height: 1px;
+                background: #dcdcdc;
+                margin: 4px 0;
+            }
+        """)
+
+        self.play_menu = self.menu.addMenu("Load in Viewer")
+        self.exr_action = self.play_menu.addAction("exr")
+        self.exr_action.triggered.connect(self.load_in_viewer)
+
+        self.jpg_action = self.play_menu.addAction("jpg")
+        self.mov_action = self.play_menu.addAction("mov")
+
+        self.compare_action = self.menu.addAction("Compare")
+
+        self.remove_menu = self.menu.addMenu("Remove")
+        self.rm_single_action = self.remove_menu.addAction("Single")
+        self.rm_multi_action = self.remove_menu.addAction("Multiple")
+
+        self.menu.exec_(self.mapToGlobal(pos))
+
+        # if self.selected:
+        #     print("self.selected --- ", self.selected.text())
+
+
+    def context_menu_callback(self):
+        self.exr_action.triggered.connect(self.add_exr_in_player)
+
+
+    def load_in_viewer(self):
+        print("EXR clicked")
+
+
     def set_style_sheet(self):
         self.setStyleSheet("""
                 border: 3px grey;
-                background-color: grey;
+                background-color: #f5f5f5;
         """)
 
 
@@ -348,6 +430,7 @@ class RenderVersionWidget(QWidget):
         lbl_thumbnil = QLabel()
         lbl_thumbnil.setPixmap(scaled)
         lbl_thumbnil.setAlignment(Qt.AlignCenter)
+        lbl_thumbnil.setFixedWidth(50)
 
         hlay.addWidget(lbl_thumbnil)
   
@@ -359,17 +442,24 @@ class RenderVersionWidget(QWidget):
         image_nm = os.listdir(self.ver_path)[0]
         lbl_title = QLabel(f"  {image_nm.split('.')[0]}  ")
         font = QFont()
-        font.setPointSize(14)
+        font.setPointSize(10)
         lbl_title.setFont(font)
 
         first_frame = random.randint(1001, 1009)
         last_frame = random.randint(1100, 1200)
         lbl_info = QLabel(
-            f"""  Project - {self.ver_path.split(os.sep)[2]}
-        Shot - {self.ver_path.split(os.sep)[5]}
-        Frame range - {first_frame} - {last_frame}  """
+            f"""  
+            Project - {self.ver_path.split(os.sep)[2]}
+            Shot - {self.ver_path.split(os.sep)[2]}
+            Frame range - {first_frame} - {last_frame}  
+        """
         )
-        font.setPointSize(11)
+
+        print("***"*10)
+        pprint(lbl_info.text())
+        print("***"*10)
+
+        font.setPointSize(8)
         lbl_info.setFont(font)
 
         vlay.addWidget(lbl_title)
@@ -378,6 +468,15 @@ class RenderVersionWidget(QWidget):
         hlay.addLayout(vlay)
 
         self.mainhlay.addLayout(hlay)
+
+    
+    def enterEvent(self, event):
+        self.setStyleSheet("background-color: #dcdcdc; border: 1px solid #ccc; padding: 1px;")
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setStyleSheet("")
+        super().leaveEvent(event)
 
 
 
@@ -409,9 +508,6 @@ class DataModel():
             if ver_widget_lst:
                 return ver_widget_lst
             
-
-
-
 
     def get_file_data(self):
         return "file has been opened"
