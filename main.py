@@ -26,11 +26,10 @@ from PySide2.QtWidgets import (
     QScrollArea,
     QGridLayout,
     QSizePolicy,
-    QMenu
-    
+    QMenu      
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont
-from PySide2. QtCore import Qt, QUrl, Slot, Signal
+from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint
 import sys, os
 import random
 
@@ -279,23 +278,48 @@ class LogicHandler():
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
 
+        # self.exr_action.triggered.connect(self.load_in_viewer)
 
-    def load_exr_in_viewer(self):
-        print("this is load_exr_in_viewer")
+
+        # self.model.ver_wid.exr_action.triggered.connect(self.load_exr_in_viewer)
 
 
     def on_item_clicked(self, item, column):
         print("item --- ", item)
         print("column --- ", column)
         info_wid_lst = self.model.get_ren_info_wid(item, column)
-        print("info_wid_lst --- ", info_wid_lst)
 
         if info_wid_lst:
             self.view.add_ren_wid(info_wid_lst)
+            for w in info_wid_lst:
+                # w.exr_action.triggered.connect(self.load_exr_in_viewer)
+                w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+                # widget.menuRequested.connect(self.handle_context_menu)
         else:
             self.view.clear_lst_wid()
 
 
+    def handle_context_menu(self, widget, pos):
+        print("widget --- ", widget)
+        print("pos --- ", pos)
+        widget.populate_menu_actions(pos)
+        # if widget.exr_action:
+        widget.exr_action.triggered.connect(self.load_exr_in_viewer)
+        widget.jpg_action.triggered.connect(self.load_jpg_in_viewer)
+        widget.mov_action.triggered.connect(self.load_mov_in_viewer)
+
+        widget.menu.exec_(widget.mapToGlobal(pos))
+        print("***"*10)
+
+
+    def load_exr_in_viewer(self):
+        print("this is load_exr_in_viewer")
+
+    def load_jpg_in_viewer(self):
+        print("this is load_jpg_in_viewer")
+
+    def load_mov_in_viewer(self):
+        print("this is load_mov_in_viewer")
 
     def open_file(self):
         msg = self.model.get_file_data()
@@ -335,8 +359,11 @@ class LogicHandler():
 
 
 class RenderVersionWidget(QWidget):
+    contextMenuRequested = Signal(QPoint)
+
     def __init__(self, ver_path):
         super().__init__()
+        # self.exr_action = None
 
         # self.fixed_width = 400
         # self.setFixedWidth(self.fixed_width)
@@ -352,7 +379,9 @@ class RenderVersionWidget(QWidget):
         self.setLayout(self.mainhlay)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.populate_menu_actions)
+        # self.customContextMenuRequested.connect(self.populate_menu_actions)
+        self.customContextMenuRequested.connect(self.contextMenuRequested)
+
 
         # self.context_menu_callback()
 
@@ -388,7 +417,7 @@ class RenderVersionWidget(QWidget):
 
         self.play_menu = self.menu.addMenu("Load in Viewer")
         self.exr_action = self.play_menu.addAction("exr")
-        self.exr_action.triggered.connect(self.load_in_viewer)
+        # self.exr_action.triggered.connect(self.load_in_viewer)
 
         self.jpg_action = self.play_menu.addAction("jpg")
         self.mov_action = self.play_menu.addAction("mov")
@@ -399,14 +428,14 @@ class RenderVersionWidget(QWidget):
         self.rm_single_action = self.remove_menu.addAction("Single")
         self.rm_multi_action = self.remove_menu.addAction("Multiple")
 
-        self.menu.exec_(self.mapToGlobal(pos))
+        # self.menu.exec_(self.mapToGlobal(pos))
 
         # if self.selected:
         #     print("self.selected --- ", self.selected.text())
 
 
-    def context_menu_callback(self):
-        self.exr_action.triggered.connect(self.add_exr_in_player)
+    # def context_menu_callback(self):
+    #     self.exr_action.triggered.connect(self.add_exr_in_player)
 
 
     def load_in_viewer(self):
@@ -482,9 +511,9 @@ class RenderVersionWidget(QWidget):
 
 class DataModel():
     def __init__(self):
-        pass
+        self.ver_wid = None
 
-    # @Slot(QTreeWidgetItem, int)
+    # @Slot(QTreeWidgetItem, int) 
     def get_ren_info_wid(self, item: QTreeWidgetItem, column: int):
 
         parts = []
@@ -501,9 +530,9 @@ class DataModel():
 
             ver_widget_lst = []
             for ver in os.listdir(self.ren_dir_path):
-                ver_wid = RenderVersionWidget(os.path.join(self.ren_dir_path, ver))
+                self.ver_wid = RenderVersionWidget(os.path.join(self.ren_dir_path, ver))
                 # ver_wid.setStyleSheet("border: 3px double gray;")
-                ver_widget_lst.append(ver_wid)
+                ver_widget_lst.append(self.ver_wid)
 
             if ver_widget_lst:
                 return ver_widget_lst
