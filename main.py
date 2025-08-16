@@ -30,7 +30,7 @@ from PySide2.QtWidgets import (
     QMessageBox,  
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent
-from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent
+from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
@@ -138,7 +138,7 @@ class LayoutManager(QMainWindow):
         self.setFixedHeight(750)
         self.setFixedWidth(1600)
         self.pixmap = None
-        self.zoom_factor = 1.0
+        # self.zoom_factor = 1.0
         self.scroll = QScrollArea()
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
@@ -256,7 +256,7 @@ class LayoutManager(QMainWindow):
    
         self.splitter.addWidget(self.viewer_wid)
 
-        self.tab_wid.installEventFilter(self)
+        # self.tab_wid.installEventFilter(self)
 
     def create_viewer_tab(self, meta=None):
         tab_view_wid = QWidget()
@@ -276,44 +276,44 @@ class LayoutManager(QMainWindow):
         if not self.pixmap.isNull():
             self.tab_view_lbl.clear()
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)
-            self.update_image_size()
+            # self.update_image_size()
  
         else:
             self.tab_view_lbl.clear()
             self.tab_view_lbl.setText("Image not found!")
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)            
 
-    def update_image_size(self):
-        if self.pixmap:
-            scaled_pixmap = self.pixmap.scaled(
-                self.tab_view_lbl.size() * self.zoom_factor,
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            self.tab_view_lbl.setPixmap(scaled_pixmap)
+    # def update_image_size(self):
+    #     if self.pixmap:
+    #         scaled_pixmap = self.pixmap.scaled(
+    #             self.tab_view_lbl.size() * self.zoom_factor,
+    #             Qt.KeepAspectRatio,
+    #             Qt.SmoothTransformation
+    #         )
+    #         self.tab_view_lbl.setPixmap(scaled_pixmap)
 
     def show_notification(self, msg):
         QMessageBox.information(self, "Action", msg)
 
 
-    def eventFilter(self, obj, event):
-        if obj == self.tab_wid and event.type() == QEvent.Wheel:
-            if self.tab_wid.underMouse():
-                zoom_in = event.angleDelta().y() > 0
+    # def eventFilter(self, obj, event):
+    #     if obj == self.tab_wid and event.type() == QEvent.Wheel:
+    #         if self.tab_wid.underMouse():
+    #             zoom_in = event.angleDelta().y() > 0
 
-                if zoom_in:
-                    self.zoom_factor *= 1.1
-                else:
-                    self.zoom_factor *= 0.9
+    #             if zoom_in:
+    #                 self.zoom_factor *= 1.1
+    #             else:
+    #                 self.zoom_factor *= 0.9
 
-                self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
+    #             self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
 
-                self.update_image_size()
-                event.accept()
-            else:
-                return True
+    #             self.update_image_size()
+    #             event.accept()
+    #         else:
+    #             return True
 
-        return super().eventFilter(obj, event)
+    #     return super().eventFilter(obj, event)
 
 
     def wheelEvent(self, event: QWheelEvent):
@@ -343,13 +343,16 @@ class LayoutManager(QMainWindow):
                 self.lst_wid.takeItem(i)
                 break
 
-class LogicHandler():
+class LogicHandler(QObject):
     def __init__(self, model, view):
+        super().__init__()
         self.model = model
         self.view = view
+        self.zoom_factor = 1.0
         self.signal_slot()
         # self.tree_wid_drag_drop_handler = TreeWidgetDragDropHandler(view)
         # self.view.tree_wid.handler = self.tree_wid_drag_drop_handler
+        self.view.tab_wid.installEventFilter(self)
 
     def signal_slot(self):
         
@@ -411,6 +414,7 @@ class LogicHandler():
             if result:
                 print("path ----- ", path)
                 self.view.load_render_in_viewer(path)
+                self.update_image_size()
                 self.view.show_notification("Successfully loaded into viewer.")
             else:
                 self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
@@ -432,6 +436,34 @@ class LogicHandler():
             # ------------------------------------------------------------------------------------------------------
 
             # self.load_exr_in_viewer()
+
+    def eventFilter(self, obj, event):
+        if obj == self.view.tab_wid and event.type() == QEvent.Wheel:
+            if self.view.tab_wid.underMouse():
+                zoom_in = event.angleDelta().y() > 0
+
+                if zoom_in:
+                    self.zoom_factor *= 1.1
+                else:
+                    self.zoom_factor *= 0.9
+
+                self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
+
+                self.update_image_size()
+                event.accept()
+            else:
+                return True
+
+        return super().eventFilter(obj, event)
+    
+    def update_image_size(self):
+        if self.view.pixmap:
+            scaled_pixmap = self.view.pixmap.scaled(
+                self.view.tab_view_lbl.size() * self.zoom_factor,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.view.tab_view_lbl.setPixmap(scaled_pixmap)
 
 
     # def load_exr_in_viewer(self):
