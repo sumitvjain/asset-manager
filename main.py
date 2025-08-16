@@ -26,10 +26,12 @@ from PySide2.QtWidgets import (
     QScrollArea,
     QGridLayout,
     QSizePolicy,
-    QMenu      
+    QMenu,
+    QMessageBox,  
 )
-from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont
-from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint
+from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent
+from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent
+from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
 
@@ -45,14 +47,14 @@ class TreeWidgetDragDrop(QTreeWidget):
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         if event.mimeData().hasUrls():
-            print("dragEnterEvent --------- ")
+            # print("dragEnterEvent --------- ")
             event.acceptProposedAction()
         else:
             event.ignore()
     
     def dragMoveEvent(self, e:QDragMoveEvent):
         if e.mimeData().hasUrls():
-            print("dragMoveEvent --------- ")
+            # print("dragMoveEvent --------- ")
             e.acceptProposedAction()
         else:
             e.ignore()
@@ -81,7 +83,6 @@ class TreeWidgetDragDrop(QTreeWidget):
         else:
             event.ignore()
 
-
     def enterEvent(self, event):
         """When mouse enters widget"""
         self.setStyleSheet("""
@@ -90,10 +91,10 @@ class TreeWidgetDragDrop(QTreeWidget):
 
             }
             QTreeWidget::item:hover {
-                background-color: #778899;
+                background-color: #B0C4DE;
             }
             QTreeWidget::item:selected {
-                background-color: #5F9EA0;
+                background-color: #20B2AA;
                 color: black;
             }
         """)
@@ -105,9 +106,12 @@ class TreeWidgetDragDrop(QTreeWidget):
             QTreeWidget::item {
                 background-color: #F0F8FF;
             }
+            QTreeWidget::item:selected {
+                background-color: #F0F8FF;
+                color: black;
+            }
         """)
         super().leaveEvent(event)
-
 
     def build_tree_view(self, path, tree_item):
         dir_contents = os.listdir(path)
@@ -129,8 +133,12 @@ class LayoutManager(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Asset Manager")
-        self.setGeometry(100,50, 1000, 450)
 
+        # self.setGeometry(10,30, 1580, 800)
+        self.setFixedHeight(750)
+        self.setFixedWidth(1600)
+        self.pixmap = None
+        self.zoom_factor = 1.0
         self.scroll = QScrollArea()
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
@@ -144,12 +152,11 @@ class LayoutManager(QMainWindow):
         self.add_menu()
         self.add_tree_wid()
         self.add_lst_wid()
-        self.add_tab_wid()
+        self.add_viewer_wid()
 
         #self.mainvlay.addLayout(self.wid_hlay)
         # self.mainvlay.addLayout(self.splitter)
         self.mainvlay.addWidget(self.splitter)
-
 
     def add_ren_wid(self, info_wid_lst):
 
@@ -167,7 +174,6 @@ class LayoutManager(QMainWindow):
 
     def clear_lst_wid(self):
         self.lst_wid.clear()
-
 
     def add_menu(self):
         menu = self.menuBar()
@@ -200,26 +206,24 @@ class LayoutManager(QMainWindow):
         file_menu.addAction(self.copy_action)
         file_menu.addAction(self.paste_action)
 
-
     def add_tree_wid(self):
         # self.tree_wid = QTreeWidget()
         self.tree_wid = TreeWidgetDragDrop()
         #self.wid_hlay.addWidget(self.tree_wid)
         self.splitter.addWidget(self.tree_wid)
         
-
     def add_lst_wid(self):
         self.lst_wid = QListWidget()
         #self.wid_hlay.addWidget(self.lst_wid)
         self.splitter.addWidget(self.lst_wid)
 
-    def add_tab_wid(self):
-        right_widget = QWidget()
-        right_vlay = QVBoxLayout(right_widget)
+    def add_viewer_wid(self):
+        self.viewer_wid = QWidget()
+        right_vlay = QVBoxLayout(self.viewer_wid)
         tab_vlay = QVBoxLayout()
         self.tab_wid = QTabWidget()
-
-        self.tab_viewer = QWidget()
+        self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
+        self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
 
         info_hlay = QHBoxLayout()
         self.lbl_width = QLabel("Width: ")
@@ -248,12 +252,96 @@ class LayoutManager(QMainWindow):
 
         right_vlay.addLayout(tab_vlay)
         right_vlay.addLayout(btn_hlay)
-
-        # self.wid_hlay.addLayout(right_vlay)
         
    
-        self.splitter.addWidget(right_widget)
+        self.splitter.addWidget(self.viewer_wid)
 
+        self.tab_wid.installEventFilter(self)
+
+    def create_viewer_tab(self, meta=None):
+        tab_view_wid = QWidget()
+        tab_view_vlay_1 = QVBoxLayout()
+        if meta is None:
+            self.tab_view_lbl = QLabel()
+            tab_view_vlay_1.addWidget(self.tab_view_lbl)
+        tab_view_wid.setLayout(tab_view_vlay_1)
+        return tab_view_wid
+
+
+    def load_render_in_viewer(self, path):
+        current_tab = self.tab_wid.currentWidget()
+        label = current_tab.findChild(QLabel)
+
+        self.pixmap = QPixmap(path)
+        if not self.pixmap.isNull():
+            self.tab_view_lbl.clear()
+            self.tab_view_lbl.setAlignment(Qt.AlignCenter)
+            self.update_image_size()
+ 
+        else:
+            self.tab_view_lbl.clear()
+            self.tab_view_lbl.setText("Image not found!")
+            self.tab_view_lbl.setAlignment(Qt.AlignCenter)            
+
+    def update_image_size(self):
+        if self.pixmap:
+            scaled_pixmap = self.pixmap.scaled(
+                self.tab_view_lbl.size() * self.zoom_factor,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.tab_view_lbl.setPixmap(scaled_pixmap)
+
+    def show_notification(self, msg):
+        QMessageBox.information(self, "Action", msg)
+
+
+    def eventFilter(self, obj, event):
+        if obj == self.tab_wid and event.type() == QEvent.Wheel:
+            if self.tab_wid.underMouse():
+                zoom_in = event.angleDelta().y() > 0
+
+                if zoom_in:
+                    self.zoom_factor *= 1.1
+                else:
+                    self.zoom_factor *= 0.9
+
+                self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
+
+                self.update_image_size()
+                event.accept()
+            else:
+                return True
+
+        return super().eventFilter(obj, event)
+
+
+    def wheelEvent(self, event: QWheelEvent):
+        # self.tab_wid
+        # zoom_in = event.angleDelta().y() > 0
+
+        # if zoom_in:
+        #     self.zoom_factor *= 1.1
+        # else:
+        #     self.zoom_factor *= 0.9
+
+        # self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
+
+        # self.update_image_size()
+        # event.accept()
+        event.ignore()
+
+    def remove_selected(self, widget):
+        # sel_wid = invoked_action.parentWidget().parentWidget().parentWidget()
+        # row = self.lst_wid.row(item)
+        # self.lst_wid.takeItem(row)
+        # row = self.list_widget.row(item)
+        # self.list_widget.takeItem(row) 
+        for i in range(self.lst_wid.count()):
+            item = self.lst_wid.item(i)
+            if self.lst_wid.itemWidget(item) == widget:
+                self.lst_wid.takeItem(i)
+                break
 
 class LogicHandler():
     def __init__(self, model, view):
@@ -283,43 +371,90 @@ class LogicHandler():
 
         # self.model.ver_wid.exr_action.triggered.connect(self.load_exr_in_viewer)
 
-
     def on_item_clicked(self, item, column):
-        print("item --- ", item)
-        print("column --- ", column)
+        # print("item --- ", item)
+        # print("column --- ", column)
         info_wid_lst = self.model.get_ren_info_wid(item, column)
 
         if info_wid_lst:
             self.view.add_ren_wid(info_wid_lst)
+
             for w in info_wid_lst:
-                # w.exr_action.triggered.connect(self.load_exr_in_viewer)
                 w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
-                # widget.menuRequested.connect(self.handle_context_menu)
+
         else:
             self.view.clear_lst_wid()
 
-
     def handle_context_menu(self, widget, pos):
-        print("widget --- ", widget)
-        print("pos --- ", pos)
+        # print("widget --- ", widget)
+        # print("pos --- ", pos)
         widget.populate_menu_actions(pos)
-        # if widget.exr_action:
-        widget.exr_action.triggered.connect(self.load_exr_in_viewer)
-        widget.jpg_action.triggered.connect(self.load_jpg_in_viewer)
-        widget.mov_action.triggered.connect(self.load_mov_in_viewer)
 
-        widget.menu.exec_(widget.mapToGlobal(pos))
-        print("***"*10)
+        # widget.exr_action.triggered.connect(self.load_exr_in_viewer)
+        # widget.jpg_action.triggered.connect(self.load_jpg_in_viewer)
+        # widget.mov_action.triggered.connect(self.load_mov_in_viewer)
+
+        
+        # widget.compare_action.triggered.connect(self.compare_versions)
+        # widget.rm_single_action.triggered.connect(self.remove_version)
+        # widget.rm_multi_action.triggered.connect(self.remove_multi_versions)
+
+        self.action = widget.menu.exec_(widget.mapToGlobal(pos))
+
+        if self.action:
+            self.action_clicked(self.action, pos)
+
+    def action_clicked(self, invoked_action, pos):
+
+        if invoked_action.text() in ["exr", 'jpg', 'mov']:
+            result, path = self.model.get_invoked_action_path(invoked_action)
+            if result:
+                print("path ----- ", path)
+                self.view.load_render_in_viewer(path)
+                self.view.show_notification("Successfully loaded into viewer.")
+            else:
+                self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
+        elif self.action.text() == "Remove":
+            # print("pos --- ", pos)
+            # item = self.view.lst_wid.itemAt(pos)
+            # print("item ---- ", item)
+            widget = invoked_action.parent().parent()       
+            self.view.remove_selected(widget)
 
 
-    def load_exr_in_viewer(self):
-        print("this is load_exr_in_viewer")
+            # -----------------------------------------------------------------------------------------------------
+            # child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
+            # for child in child_widgets:
+            #     if isinstance(child, QLabel):
+            #         print("child text --- ", child.text())
+            #     if child.objectName():
+            #         print(f"{child.__class__.__name__} objectName: {child.objectName()}")
+            # ------------------------------------------------------------------------------------------------------
 
-    def load_jpg_in_viewer(self):
-        print("this is load_jpg_in_viewer")
+            # self.load_exr_in_viewer()
 
-    def load_mov_in_viewer(self):
-        print("this is load_mov_in_viewer")
+
+    # def load_exr_in_viewer(self):
+
+        # print("self.action ----- ", dir(self.action))
+        # print("this is load_exr_in_viewer")
+        # self.model.get_exr_data()
+
+
+    # def load_jpg_in_viewer(self):
+    #     print("this is load_jpg_in_viewer")
+
+    # def load_mov_in_viewer(self):
+    #     print("this is load_mov_in_viewer")
+
+    # def compare_versions(self):
+    #     print("this is compare_versions")
+
+    # def remove_version(self):
+    #     print("this is remove_version")
+
+    # def remove_multi_versions(self):
+    #     print("this is remove_multi_versions")
 
     def open_file(self):
         msg = self.model.get_file_data()
@@ -368,7 +503,6 @@ class RenderVersionWidget(QWidget):
         # self.fixed_width = 400
         # self.setFixedWidth(self.fixed_width)
 
-
         self.set_style_sheet()   
         self.ver_path = ver_path
 
@@ -389,7 +523,7 @@ class RenderVersionWidget(QWidget):
 
 
     def populate_menu_actions(self, pos):
-        print('pos --- ', pos)
+        # print('pos --- ', pos)
         self.menu = QMenu(self)
         self.menu.setStyleSheet("""
             QMenu {
@@ -422,11 +556,13 @@ class RenderVersionWidget(QWidget):
         self.jpg_action = self.play_menu.addAction("jpg")
         self.mov_action = self.play_menu.addAction("mov")
 
-        self.compare_action = self.menu.addAction("Compare")
 
-        self.remove_menu = self.menu.addMenu("Remove")
-        self.rm_single_action = self.remove_menu.addAction("Single")
-        self.rm_multi_action = self.remove_menu.addAction("Multiple")
+        self.remove_action = self.menu.addAction("Remove")
+        # self.compare_action = self.menu.addAction("Compare")
+
+        # self.remove_menu = self.menu.addMenu("Remove")
+        # self.rm_single_action = self.remove_menu.addAction("Single")
+        # self.rm_multi_action = self.remove_menu.addAction("Multiple")
 
         # self.menu.exec_(self.mapToGlobal(pos))
 
@@ -455,12 +591,17 @@ class RenderVersionWidget(QWidget):
         image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
         pixmap = QPixmap(image_full_path)
         scaled = pixmap.scaled(60, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    
+
+        lbl_full_path = QLabel()
+        lbl_full_path.setText(f"Path-{image_full_path}")
+        lbl_full_path.setHidden(True)
+
         lbl_thumbnil = QLabel()
         lbl_thumbnil.setPixmap(scaled)
         lbl_thumbnil.setAlignment(Qt.AlignCenter)
         lbl_thumbnil.setFixedWidth(50)
 
+        hlay.addWidget(lbl_full_path)
         hlay.addWidget(lbl_thumbnil)
   
         
@@ -500,7 +641,7 @@ class RenderVersionWidget(QWidget):
 
     
     def enterEvent(self, event):
-        self.setStyleSheet("background-color: #dcdcdc; border: 1px solid #ccc; padding: 1px;")
+        self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
         super().enterEvent(event)
 
     def leaveEvent(self, event):
@@ -508,10 +649,20 @@ class RenderVersionWidget(QWidget):
         super().leaveEvent(event)
 
 
-
 class DataModel():
     def __init__(self):
         self.ver_wid = None
+
+    def get_invoked_action_path(self, invoked_action):
+        child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
+        if invoked_action.text() == "exr":
+            for child in child_widgets:
+                if isinstance(child, QLabel):
+                    if child.text().startswith("Path"):
+                        path = child.text().split("Path-")[-1]
+                        return True, path
+        else:
+            return False, None
 
     # @Slot(QTreeWidgetItem, int) 
     def get_ren_info_wid(self, item: QTreeWidgetItem, column: int):
@@ -537,7 +688,6 @@ class DataModel():
             if ver_widget_lst:
                 return ver_widget_lst
             
-
     def get_file_data(self):
         return "file has been opened"
 
@@ -549,7 +699,6 @@ class DataModel():
     
     def save_as_execute(self):
         return "file has been save as"
-
 
     def undo_operation(self):
         return "Undo last operation"
@@ -574,16 +723,5 @@ if __name__ == "__main__":
     controller = LogicHandler(model, view)
     view.show()
     sys.exit(app.exec_())
-
-
-
-# des_path = r"E:\demo_projects\aawara\seq\aaw_000\aaw_000_0000\render"
-# image_path = r"E:\demo_projects\aawara\seq\aaw_000\aaw_000_0000\scan\Capture001.png"
-# import os
-# import shutil
-# for i in range(1,10):
-#     destination_path = os.path.join(des_path, f"v00{i}")
-#     os.makedirs(destination_path)
-#     shutil.copy2(image_path, destination_path)
 
 
