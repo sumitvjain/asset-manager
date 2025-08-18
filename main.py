@@ -281,7 +281,10 @@ class LayoutManager(QMainWindow):
         else:
             self.tab_view_lbl.clear()
             self.tab_view_lbl.setText("Image not found!")
-            self.tab_view_lbl.setAlignment(Qt.AlignCenter)            
+            self.tab_view_lbl.setAlignment(Qt.AlignCenter)       
+
+
+    
 
     # def update_image_size(self):
     #     if self.pixmap:
@@ -352,6 +355,7 @@ class LogicHandler(QObject):
         self.signal_slot()
         # self.tree_wid_drag_drop_handler = TreeWidgetDragDropHandler(view)
         # self.view.tree_wid.handler = self.tree_wid_drag_drop_handler
+        self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
         self.view.tab_wid.installEventFilter(self)
 
     def signal_slot(self):
@@ -453,6 +457,23 @@ class LogicHandler(QObject):
                 event.accept()
             else:
                 return True
+            
+        elif obj == self.view.tab_wid and event.type() == QEvent.KeyPress:
+            key = event.key()
+            if key == Qt.Key_Plus:
+                self.zoom_factor *= 1.1
+            elif key == Qt.Key_Minus:
+                self.zoom_factor *= 0.9
+                
+            self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
+            self.update_image_size()
+            event.accept()
+            return True
+
+        elif obj == self.view.tab_wid and event.type() == QEvent.MouseButtonPress:
+            # when user clicks, give it focus
+            self.view.tab_wid.setFocus()
+
 
         return super().eventFilter(obj, event)
     
