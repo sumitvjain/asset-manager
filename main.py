@@ -3,9 +3,9 @@
 # )
 # import sys
 
-# from view import LayoutManager
-# from model import DataModel
-# from controller import LogicHandler
+# from view import view
+# from model import Model
+# from controller import Controller
 
 from  pprint import pprint
 from PySide2.QtWidgets import (
@@ -37,7 +37,7 @@ import random
 
 DRIVE = "E:\\"
 
-class TreeWidgetDragDrop(QTreeWidget):
+class TreeWidget(QTreeWidget):
     itemPathClicked = Signal(str)
     def __init__(self):
         super().__init__()
@@ -129,7 +129,7 @@ class TreeWidgetDragDrop(QTreeWidget):
                 tree_item.addChild(file_item)
 
 
-class LayoutManager(QMainWindow):
+class View(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Asset Manager")
@@ -208,12 +208,13 @@ class LayoutManager(QMainWindow):
 
     def add_tree_wid(self):
         # self.tree_wid = QTreeWidget()
-        self.tree_wid = TreeWidgetDragDrop()
+        self.tree_wid = TreeWidget()
         #self.wid_hlay.addWidget(self.tree_wid)
         self.splitter.addWidget(self.tree_wid)
         
     def add_lst_wid(self):
         self.lst_wid = QListWidget()
+        self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
         #self.wid_hlay.addWidget(self.lst_wid)
         self.splitter.addWidget(self.lst_wid)
 
@@ -335,25 +336,30 @@ class LayoutManager(QMainWindow):
         event.ignore()
 
     def remove_selected(self, widget):
+        self.lst_wid.takeItem(widget)
         # sel_wid = invoked_action.parentWidget().parentWidget().parentWidget()
         # row = self.lst_wid.row(item)
         # self.lst_wid.takeItem(row)
         # row = self.list_widget.row(item)
         # self.list_widget.takeItem(row) 
-        for i in range(self.lst_wid.count()):
-            item = self.lst_wid.item(i)
-            if self.lst_wid.itemWidget(item) == widget:
-                self.lst_wid.takeItem(i)
-                break
 
-class LogicHandler(QObject):
+        # -----------------------------------------------------
+        # for i in range(self.lst_wid.count()):
+        #     item = self.lst_wid.item(i)
+        #     if self.lst_wid.itemWidget(item) == widget:
+        #         self.lst_wid.takeItem(i)
+        #         break
+        # -----------------------------------------------------
+
+
+class Controller(QObject):
     def __init__(self, model, view):
         super().__init__()
         self.model = model
         self.view = view
         self.zoom_factor = 1.0
         self.signal_slot()
-        # self.tree_wid_drag_drop_handler = TreeWidgetDragDropHandler(view)
+        # self.tree_wid_drag_drop_handler = TreeWidgetHandler(view)
         # self.view.tree_wid.handler = self.tree_wid_drag_drop_handler
         self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
         self.view.tab_wid.installEventFilter(self)
@@ -372,6 +378,8 @@ class LogicHandler(QObject):
         self.view.paste_action.triggered.connect(self.paste_item)
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
+
+        
 
         # self.exr_action.triggered.connect(self.load_in_viewer)
 
@@ -395,6 +403,7 @@ class LogicHandler(QObject):
     def handle_context_menu(self, widget, pos):
         # print("widget --- ", widget)
         # print("pos --- ", pos)
+        
         widget.populate_menu_actions(pos)
 
         # widget.exr_action.triggered.connect(self.load_exr_in_viewer)
@@ -426,9 +435,23 @@ class LogicHandler(QObject):
             # print("pos --- ", pos)
             # item = self.view.lst_wid.itemAt(pos)
             # print("item ---- ", item)
-            widget = invoked_action.parent().parent()       
-            self.view.remove_selected(widget)
+            selected_items = self.view.lst_wid.selectedItems()
+            print("selected_items len -- ", len(selected_items))
+            rows = sorted([self.view.lst_wid.row(it) for it in selected_items], reverse=True)
 
+            for row in rows:
+                self.view.remove_selected(row) 
+
+            # for item in selected_items:
+                
+                # widget = self.view.lst_wid.row(item)
+                # print("widget --- ", widget)
+                # self.view.lst_wid.takeItem(row)   
+                # self.view.remove_selected(item)         
+
+            # widget = invoked_action.parent().parent()   
+            # print("widget === ", widget)    
+            # self.view.remove_selected(widget)
 
             # -----------------------------------------------------------------------------------------------------
             # child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
@@ -440,6 +463,15 @@ class LogicHandler(QObject):
             # ------------------------------------------------------------------------------------------------------
 
             # self.load_exr_in_viewer()
+        elif self.action.text() == "Compare":
+            selected_items = self.view.lst_wid.selectedItems()
+            if len(selected_items) == 2:
+                self.view.show_notification("The selected version has been loaded into the viewer")
+            else:       
+                self.view.show_notification("You must select two items to proceed")
+
+
+
 
     def eventFilter(self, obj, event):
         if obj == self.view.tab_wid and event.type() == QEvent.Wheel:
@@ -546,7 +578,7 @@ class LogicHandler(QObject):
         print(msg)
 
 
-class RenderVersionWidget(QWidget):
+class ThumbnilWidget(QWidget):
     contextMenuRequested = Signal(QPoint)
 
     def __init__(self, ver_path):
@@ -611,7 +643,7 @@ class RenderVersionWidget(QWidget):
 
 
         self.remove_action = self.menu.addAction("Remove")
-        # self.compare_action = self.menu.addAction("Compare")
+        self.compare_action = self.menu.addAction("Compare")
 
         # self.remove_menu = self.menu.addMenu("Remove")
         # self.rm_single_action = self.remove_menu.addAction("Single")
@@ -702,7 +734,7 @@ class RenderVersionWidget(QWidget):
         super().leaveEvent(event)
 
 
-class DataModel():
+class Model():
     def __init__(self):
         self.ver_wid = None
 
@@ -734,7 +766,7 @@ class DataModel():
 
             ver_widget_lst = []
             for ver in os.listdir(self.ren_dir_path):
-                self.ver_wid = RenderVersionWidget(os.path.join(self.ren_dir_path, ver))
+                self.ver_wid = ThumbnilWidget(os.path.join(self.ren_dir_path, ver))
                 # ver_wid.setStyleSheet("border: 3px double gray;")
                 ver_widget_lst.append(self.ver_wid)
 
@@ -771,9 +803,9 @@ class DataModel():
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    model = DataModel()
-    view = LayoutManager()
-    controller = LogicHandler(model, view)
+    model = Model()
+    view = View()
+    controller = Controller(model, view)
     view.show()
     sys.exit(app.exec_())
 
