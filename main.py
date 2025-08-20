@@ -138,6 +138,7 @@ class View(QMainWindow):
         self.setFixedHeight(750)
         self.setFixedWidth(1600)
         self.pixmap = None
+        self.lbl_thumb_path = None
         # self.zoom_factor = 1.0
         self.scroll = QScrollArea()
         widget = QWidget()  
@@ -158,9 +159,9 @@ class View(QMainWindow):
         # self.mainvlay.addLayout(self.splitter)
         self.mainvlay.addWidget(self.splitter)
 
-    def add_ren_wid(self, info_wid_lst):
+    def add_thumbnil_wid(self, thumbnil_wid_items_lst):
 
-        for widget in info_wid_lst:
+        for widget in thumbnil_wid_items_lst:
             list_item = QListWidgetItem()
             list_item.setSizeHint(widget.sizeHint())
             self.lst_wid.addItem(list_item)
@@ -213,10 +214,36 @@ class View(QMainWindow):
         self.splitter.addWidget(self.tree_wid)
         
     def add_lst_wid(self):
+        lst_widget = QWidget()
+        lst_vlay = QVBoxLayout(lst_widget)
+
+        self.lbl_thumb_path = QLabel('')
+        self.lbl_thumb_path.setStyleSheet("""
+            QLabel {
+                color: white;                
+                background-color: #444444;    
+                padding: 5px;               
+                border-radius: 3px;    
+            }       
+        """)
+
         self.lst_wid = QListWidget()
         self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
         #self.wid_hlay.addWidget(self.lst_wid)
-        self.splitter.addWidget(self.lst_wid)
+
+        lst_vlay.addWidget(self.lbl_thumb_path)
+        lst_vlay.addWidget(self.lst_wid)
+
+        # self.splitter.addWidget(self.lst_wid)
+        self.splitter.addWidget(lst_widget)
+        
+    def set_lbl_thumbnil_path(self, text):
+        self.lbl_thumb_path.setText(f"Thumbnil Directory Path:\n{text}")
+        font = QFont()
+        font.setBold(True)
+        font.setFamilies("Arial")
+        self.lbl_thumb_path.setFont(font)
+
 
     def add_viewer_wid(self):
         self.viewer_wid = QWidget()
@@ -389,16 +416,20 @@ class Controller(QObject):
     def on_item_clicked(self, item, column):
         # print("item --- ", item)
         # print("column --- ", column)
-        info_wid_lst = self.model.get_ren_info_wid(item, column)
+        thumbnil_wid_items_lst, thumb_dir_name = self.model.get_thumbnil_wid_lst(item, column)
 
-        if info_wid_lst:
-            self.view.add_ren_wid(info_wid_lst)
+        if thumbnil_wid_items_lst:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
 
-            for w in info_wid_lst:
+            for w in thumbnil_wid_items_lst:
                 w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
 
         else:
             self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.show_notification("Thumbnil not found.")
 
     def handle_context_menu(self, widget, pos):
         # print("widget --- ", widget)
@@ -581,7 +612,8 @@ class Controller(QObject):
 class ThumbnilWidget(QWidget):
     contextMenuRequested = Signal(QPoint)
 
-    def __init__(self, ver_path):
+    # def __init__(self, ver_path):
+    def __init__(self, img_data_dict):
         super().__init__()
         # self.exr_action = None
 
@@ -589,7 +621,8 @@ class ThumbnilWidget(QWidget):
         # self.setFixedWidth(self.fixed_width)
 
         self.set_style_sheet()   
-        self.ver_path = ver_path
+        # self.ver_path = ver_path
+        self.img_data_dict = img_data_dict
 
         self.mainhlay = QHBoxLayout(self)
         self.mainhlay.setContentsMargins(0,0,0,0)
@@ -671,9 +704,20 @@ class ThumbnilWidget(QWidget):
 
 
     def add_widgets(self):
+        # self.img_data_dict
+        # ******************************
+        # {'first_frame': 1004,
+        # 'image_full_path': 'E:\\demo_projects_02\\proj_01\\seq\\proj_01_00\\proj_01_00_10\\render\\v002\\pexels-alexquezada-33041453.jpg',
+        # 'last_frame': 1192,
+        # 'lbl_title': 'pexels-alexquezada-33041453',
+        # 'prj_code': 'proj_01',
+        # 'shot_code': 'proj_01_00_10'}
+        # ******************************
+
         hlay = QHBoxLayout()
 
-        image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
+        # image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
+        image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
         scaled = pixmap.scaled(60, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
@@ -694,21 +738,34 @@ class ThumbnilWidget(QWidget):
         vlay = QVBoxLayout()
         vlay.setContentsMargins(2,0,0,0)
 
-        image_nm = os.listdir(self.ver_path)[0]
-        lbl_title = QLabel(f"  {image_nm.split('.')[0]}  ")
+        # image_nm = os.listdir(self.ver_path)[0]
+        # lbl_title = QLabel(f"  {image_nm.split('.')[0]}  ")
+
+        lbl_title = QLabel(f"  {self.img_data_dict['lbl_title']}  ")
         font = QFont()
         font.setPointSize(10)
         lbl_title.setFont(font)
 
-        first_frame = random.randint(1001, 1009)
-        last_frame = random.randint(1100, 1200)
+        # first_frame = random.randint(1001, 1009)
+        # last_frame = random.randint(1100, 1200)
+        first_frame = self.img_data_dict['first_frame']
+        last_frame = self.img_data_dict['last_frame']
+        # lbl_info = QLabel(
+        #     f"""  
+        #     Project - {self.ver_path.split(os.sep)[2]}
+        #     Shot - {self.ver_path.split(os.sep)[2]}
+        #     Frame range - {first_frame} - {last_frame}  
+        # """
+        # )
+        
         lbl_info = QLabel(
             f"""  
-            Project - {self.ver_path.split(os.sep)[2]}
-            Shot - {self.ver_path.split(os.sep)[2]}
+            Project - {self.img_data_dict['prj_code']}
+            Shot - {self.img_data_dict['shot_code']}
             Frame range - {first_frame} - {last_frame}  
         """
         )
+
 
         print("***"*10)
         pprint(lbl_info.text())
@@ -736,7 +793,7 @@ class ThumbnilWidget(QWidget):
 
 class Model():
     def __init__(self):
-        self.ver_wid = None
+        self.thumbnil_widget = None
 
     def get_invoked_action_path(self, invoked_action):
         child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
@@ -750,7 +807,7 @@ class Model():
             return False, None
 
     # @Slot(QTreeWidgetItem, int) 
-    def get_ren_info_wid(self, item: QTreeWidgetItem, column: int):
+    def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int):
 
         parts = []
         it = item
@@ -760,18 +817,132 @@ class Model():
             it = it.parent()
  
         parts.reverse()
+
+        # print("parts ---- ", parts)
         
-        if parts[-1] == 'render':
-            self.ren_dir_path = os.path.join(DRIVE, *parts)
+        # ------------------------------------------------------------------------------------
+        # ***** Do not delete, this working code, temporary off *****
 
-            ver_widget_lst = []
-            for ver in os.listdir(self.ren_dir_path):
-                self.ver_wid = ThumbnilWidget(os.path.join(self.ren_dir_path, ver))
-                # ver_wid.setStyleSheet("border: 3px double gray;")
-                ver_widget_lst.append(self.ver_wid)
+        # if parts[-1] == 'render':
+        #     self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
 
-            if ver_widget_lst:
-                return ver_widget_lst
+        #     thumb_wid_lst = []
+        #     for ver in os.listdir(self.thumbnil_dir_path):
+        #         self.thumbnil_widget = ThumbnilWidget(os.path.join(self.thumbnil_dir_path, ver))
+        #         # ver_wid.setStyleSheet("border: 3px double gray;")
+        #         thumb_wid_lst.append(self.thumbnil_widget)
+
+        #     if thumb_wid_lst:
+        #         return thumb_wid_lst
+        # ------------------------------------------------------------------------------------
+
+        # image_full_path, image_nm, lbl_title,, first_frame, last_frame, prj_code, shot_code
+
+        self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
+
+        print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
+
+
+        thumbnil_data_dict_lst = []
+        thumb_dir_name = ''
+        if os.path.isdir(self.thumbnil_dir_path):
+            thumb_dir_name = self.thumbnil_dir_path
+         
+            
+            # -------------------------------------------------------------------------------------------
+            # for file_name in os.listdir(self.thumbnil_dir_path):
+            #     file_path = os.path.join(self.thumbnil_dir_path, file_name)
+
+
+            #     if file_name.lower().endswith((".jpg", ".jpeg")):
+            #         thumbnil_data_dict = {}
+            #         image_full_path = os.path.join(self.thumbnil_dir_path, file_name)
+
+            #         thumbnil_data_dict['lbl_title'] = file_name.split('.')[0]
+            #         thumbnil_data_dict['image_full_path'] = image_full_path
+            #         thumbnil_data_dict['first_frame'] = random.randint(1001, 1009)
+            #         thumbnil_data_dict['last_frame'] = random.randint(1100, 1200)
+            #         thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
+            #         thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
+            
+            #         thumbnil_data_dict_lst.append(thumbnil_data_dict)
+        
+
+            # if thumbnil_data_dict_lst:
+            #     thumb_wid_lst = []
+            #     for img_data_dict in thumbnil_data_dict_lst:
+            #         pprint(img_data_dict)
+            #         print("***"*10)
+            #         self.thumbnil_widget = ThumbnilWidget(img_data_dict)
+            #         thumb_wid_lst.append(self.thumbnil_widget)
+                        
+            #     if thumb_wid_lst:
+            #         return thumb_wid_lst
+            # ------------------------------------------------------------------------------------------
+
+            for file_name in os.listdir(self.thumbnil_dir_path):
+                if file_name.lower().endswith((".jpg", ".jpeg")):
+                    thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
+                    thumbnil_data_dict_lst.append(thumbnil_data_dict)
+
+
+        # ******************************
+        # self.thumbnil_dir_path ---  E:\demo_projects_02\proj_01\seq\proj_01_00\proj_01_00_10\render\v008
+        # {'first_frame': 1009,
+        # 'image_full_path': 'E:\\demo_projects_02\\proj_01\\seq\\proj_01_00\\proj_01_00_10\\render\\v008\\pexels-alana-sousa-1723789-17476693.jpg',
+        # 'last_frame': 1106,
+        # 'lbl_title': 'pexels-alana-sousa-1723789-17476693',
+        # 'prj_code': 'proj_01',
+        # 'shot_code': 'proj_01_00_10'}
+        # ******************************
+        # ******************************
+        # ('  \n'
+        # '            Project - proj_01\n'
+        # '            Shot - proj_01_00_10\n'       
+        # '            Frame range - 1009 - 1106  \n'
+        # '        ')
+        # ******************************
+
+        elif os.path.isfile(self.thumbnil_dir_path):
+            thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
+            file_name = self.thumbnil_dir_path.split("\\")[-1]
+            if file_name.lower().endswith((".jpg", ".jpeg")):
+                thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=False)
+                thumbnil_data_dict_lst.append(thumbnil_data_dict)
+
+        if thumbnil_data_dict_lst:
+            thumb_wid_lst = []
+            for img_data_dict in thumbnil_data_dict_lst:
+                pprint(img_data_dict)
+                print("***"*10)
+                self.thumbnil_widget = ThumbnilWidget(img_data_dict)
+                thumb_wid_lst.append(self.thumbnil_widget)
+                    
+            if thumb_wid_lst:
+                return thumb_wid_lst, thumb_dir_name
+        else:
+            return [], self.thumbnil_dir_path
+
+            
+
+    def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
+        # if file_name.lower().endswith((".jpg", ".jpeg")):
+        thumbnil_data_dict = {}
+        if is_thumb_dir:
+            image_full_path = os.path.join(self.thumbnil_dir_path, file_name)
+        else:
+            image_full_path = self.thumbnil_dir_path
+
+        thumbnil_data_dict['lbl_title'] = file_name.split('.')[0]
+        thumbnil_data_dict['image_full_path'] = image_full_path
+        thumbnil_data_dict['first_frame'] = random.randint(1001, 1009)
+        thumbnil_data_dict['last_frame'] = random.randint(1100, 1200)
+        thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
+        thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
+
+        return thumbnil_data_dict
+
+
             
     def get_file_data(self):
         return "file has been opened"
