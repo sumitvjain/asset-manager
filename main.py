@@ -28,12 +28,14 @@ from PySide2.QtWidgets import (
     QSizePolicy,
     QMenu,
     QMessageBox,  
+    QStyle
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent
 from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
+import json
 
 DRIVE = "E:\\"
 
@@ -253,33 +255,33 @@ class View(QMainWindow):
         self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
         self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
 
-        info_hlay = QHBoxLayout()
-        self.lbl_width = QLabel("Width: ")
-        self.lbl_height = QLabel("Height: ")
-        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.lbl_frame = QLabel("Frame: ")
+        # info_hlay = QHBoxLayout()
+        # self.lbl_width = QLabel("Width: ")
+        # self.lbl_height = QLabel("Height: ")
+        # spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        # self.lbl_frame = QLabel("Frame: ")
 
-        info_hlay.addWidget(self.lbl_width)
-        info_hlay.addWidget(self.lbl_height)
-        info_hlay.addItem(spacer)
-        info_hlay.addWidget(self.lbl_frame)
+        # info_hlay.addWidget(self.lbl_width)
+        # info_hlay.addWidget(self.lbl_height)
+        # info_hlay.addItem(spacer)
+        # info_hlay.addWidget(self.lbl_frame)
 
-        btn_hlay = QHBoxLayout()
-        self.btn_zoom_int = QPushButton("Zoom In")
-        self.btn_zoom_out = QPushButton("Zoom Out")
-        self.btn_play = QPushButton("Play")
-        self.btn_pause = QPushButton("Pause")
+        # btn_hlay = QHBoxLayout()
+        # self.btn_zoom_int = QPushButton("Zoom In")
+        # self.btn_zoom_out = QPushButton("Zoom Out")
+        # self.btn_play = QPushButton("Play")
+        # self.btn_pause = QPushButton("Pause")
 
-        btn_hlay.addWidget(self.btn_zoom_int)
-        btn_hlay.addWidget(self.btn_zoom_out)
-        btn_hlay.addWidget(self.btn_play)
-        btn_hlay.addWidget(self.btn_pause)
+        # btn_hlay.addWidget(self.btn_zoom_int)
+        # btn_hlay.addWidget(self.btn_zoom_out)
+        # btn_hlay.addWidget(self.btn_play)
+        # btn_hlay.addWidget(self.btn_pause)
     
         tab_vlay.addWidget(self.tab_wid)
-        tab_vlay.addLayout(info_hlay)    
+        # tab_vlay.addLayout(info_hlay)    
 
         right_vlay.addLayout(tab_vlay)
-        right_vlay.addLayout(btn_hlay)
+        # right_vlay.addLayout(btn_hlay)
         
    
         self.splitter.addWidget(self.viewer_wid)
@@ -453,7 +455,7 @@ class Controller(QObject):
 
     def action_clicked(self, invoked_action, pos):
 
-        if invoked_action.text() in ["exr", 'jpg', 'mov']:
+        if invoked_action.text() in ["exr", 'jpg', 'mov', 'png']:
             result, path = self.model.get_invoked_action_path(invoked_action)
             if result:
                 print("path ----- ", path)
@@ -972,12 +974,62 @@ class Model():
         return "Paste Operation"
 
 
+
+def create_json_file(app_dir_path):
+    jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
+    # json_data = get_default_data()
+
+    project = {}
+    for num in range(1, 11):
+        project[f"proj_{num:02}"] = {
+            "name": f"Project_{num:02}", 
+            "extension": ["jpeg"]
+            }
+
+    with open(jsn_fle_pth, "w") as json_file:
+        json.dump(project, json_file, indent=4)
+    print("[config.json] created successfully!")
+
+
+def setup_config():
+    home_dir = os.path.expanduser('~')
+    documents_path = os.path.join(home_dir, "Documents")
+    documents_dir_lst = os.listdir(documents_path)
+    app_dir_path = os.path.join(documents_path, ".app")
+
+    if not ".app" in documents_dir_lst:       
+        os.makedirs(app_dir_path)
+        create_json_file(app_dir_path)
+
+    elif not "config.json" in os.listdir(app_dir_path):
+        create_json_file(app_dir_path)
+ 
+
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     model = Model()
     view = View()
+    setup_config()
     controller = Controller(model, view)
     view.show()
     sys.exit(app.exec_())
 
 
+
+
+
+# def update_json_file(documents_path):
+#     jsn_fle_pth = os.path.join(documents_path, ".app", 'config.json')
+
+#     with open(jsn_fle_pth, "r") as f:
+#         json_data = json.load(f)
+
+#     json_data["proj_1"]["extension"] = ["jpeg", "jpg"]
+#     json_data["proj_2"]["extension"] = ["jpeg", "jpg", "exr"]
+
+#     with open(jsn_fle_pth, "w") as f:
+#         json.dump(json_data, f, indent=4)
+
+#     print("JSON file updated successfully!")
