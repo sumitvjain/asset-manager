@@ -31,13 +31,25 @@ from PySide2.QtWidgets import (
     QStyle
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent
-from PySide2. QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
+from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
 import json
+import platform
 
-DRIVE = "E:\\"
+os_name = platform.system()
+
+if os_name == "Windows":
+    DRIVE = "E:\\"
+    SPLIT_PATTERN = "\\"
+    PLATFORM = "win"
+elif os_name == "Linux":
+    DRIVE = "/home/bhavana/sumit/python"
+    SPLIT_PATTERN = "/"
+    PLATFORM = "lin"
+
+
 
 class TreeWidget(QTreeWidget):
     itemPathClicked = Signal(str)
@@ -132,13 +144,14 @@ class TreeWidget(QTreeWidget):
 
 
 class View(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
         self.setWindowTitle("Asset Manager")
-
+        # self.set_style_sheet()
         # self.setGeometry(10,30, 1580, 800)
-        self.setFixedHeight(750)
-        self.setFixedWidth(1600)
+        # self.setFixedHeight(750)
+        # self.setFixedWidth(1600)
+        self.set_geometry(app)
         self.pixmap = None
         self.lbl_thumb_path = None
         # self.zoom_factor = 1.0
@@ -160,6 +173,68 @@ class View(QMainWindow):
         #self.mainvlay.addLayout(self.wid_hlay)
         # self.mainvlay.addLayout(self.splitter)
         self.mainvlay.addWidget(self.splitter)
+
+    def set_geometry(self, app):
+        screen = app.desktop().screenGeometry()
+        width = screen.width()
+        height = screen.height()
+        self.setGeometry(0, 0, width, height)
+        self.setMaximumWidth(width)
+        self.setMaximumHeight(height)
+
+
+    def set_style_sheet(self):
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #2b2b2b; /* Dark VFX-style background */
+            }
+
+            QTabWidget::pane {
+                border: 1px solid #444;
+                background: #3c3c3c;
+            }
+
+            QTabBar::tab {
+                background: #3c3c3c;
+                color: #ddd;
+                padding: 6px 12px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+
+            QTabBar::tab:selected {
+                background: #5a5a5a;
+                color: white;
+            }
+
+            QTreeWidget {
+                background-color: #333;
+                alternate-background-color: #3c3c3c;
+                color: #ddd;
+                border: 1px solid #555;
+            }
+            QTreeWidget::item {
+                padding: 4px;
+            }
+            QTreeWidget::item:selected {
+                background-color: #5a87f7;
+                color: white;
+            }
+
+            QListWidget {
+                background-color: #333;
+                alternate-background-color: #3c3c3c;
+                color: #ddd;
+                border: 1px solid #555;
+            }
+            QListWidget::item {
+                padding: 4px;
+            }
+            QListWidget::item:selected {
+                background-color: #5a87f7;
+                color: white;
+            }
+        """)
 
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
 
@@ -809,6 +884,22 @@ class Model():
             return False, None
 
     # @Slot(QTreeWidgetItem, int) 
+    def get_project_extension(self, proj_code):
+        json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+
+            project = data.get(proj_code)
+            if project:
+                return project.get("extension", [])
+            else:
+                print(f"Project '{proj_code}' not found.")
+                return []
+        except Exception as e:
+            print(f"Error reading JSON: {e}")
+            return []
+    
     def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int):
 
         parts = []
@@ -820,7 +911,7 @@ class Model():
  
         parts.reverse()
 
-        # print("parts ---- ", parts)
+        print("parts ---- ", parts)
         
         # ------------------------------------------------------------------------------------
         # ***** Do not delete, this working code, temporary off *****
@@ -843,12 +934,20 @@ class Model():
         self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
 
         print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
+        if PLATFORM == "lin":
+            proj_code = self.thumbnil_dir_path.split(SPLIT_PATTERN)[6]
+            
+        elif PLATFORM == "win":
+            pass
 
+        file_exts = self.get_project_extension(proj_code)
+        print("file_exts --- ", file_exts)
 
         thumbnil_data_dict_lst = []
         thumb_dir_name = ''
         if os.path.isdir(self.thumbnil_dir_path):
             thumb_dir_name = self.thumbnil_dir_path
+            print("thumb_dir_name ---- ", thumb_dir_name)
          
             
             # -------------------------------------------------------------------------------------------
@@ -907,9 +1006,14 @@ class Model():
 
         elif os.path.isfile(self.thumbnil_dir_path):
             thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
-            file_name = self.thumbnil_dir_path.split("\\")[-1]
+            print("thumb_dir_name === ", thumb_dir_name)
+            # file_name = self.thumbnil_dir_path.split("\\")[-1]
+            
+            file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
+            print("file_name ---- ", file_name)
             if file_name.lower().endswith((".jpg", ".jpeg")):
                 thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=False)
+                print("thumbnil_data_dict --- ", thumbnil_data_dict)
                 thumbnil_data_dict_lst.append(thumbnil_data_dict)
 
         if thumbnil_data_dict_lst:
@@ -923,10 +1027,9 @@ class Model():
             if thumb_wid_lst:
                 return thumb_wid_lst, thumb_dir_name
         else:
+            print("empty thumb list")
             return [], self.thumbnil_dir_path
-
-            
-
+         
     def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
         # if file_name.lower().endswith((".jpg", ".jpeg")):
         thumbnil_data_dict = {}
@@ -939,12 +1042,13 @@ class Model():
         thumbnil_data_dict['image_full_path'] = image_full_path
         thumbnil_data_dict['first_frame'] = random.randint(1001, 1009)
         thumbnil_data_dict['last_frame'] = random.randint(1100, 1200)
-        thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
-        thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
 
+        # thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
+        # thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
+        thumbnil_data_dict['prj_code'] = image_full_path.split(SPLIT_PATTERN)[2]
+        thumbnil_data_dict['shot_code'] =image_full_path.split(SPLIT_PATTERN)[5]
+        
         return thumbnil_data_dict
-
-
             
     def get_file_data(self):
         return "file has been opened"
@@ -988,7 +1092,7 @@ def create_json_file(app_dir_path):
 
     with open(jsn_fle_pth, "w") as json_file:
         json.dump(project, json_file, indent=4)
-    print("[config.json] created successfully!")
+    print(f"[config.json] created successfully! \n {jsn_fle_pth}")
 
 
 def setup_config():
@@ -1006,11 +1110,10 @@ def setup_config():
  
 
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     model = Model()
-    view = View()
+    view = View(app)
     setup_config()
     controller = Controller(model, view)
     view.show()
