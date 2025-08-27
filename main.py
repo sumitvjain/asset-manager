@@ -28,9 +28,11 @@ from PySide2.QtWidgets import (
     QSizePolicy,
     QMenu,
     QMessageBox,  
-    QStyle
+    QStyle,
+    QDialog,
+    QComboBox
 )
-from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent
+from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
 from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
@@ -48,6 +50,44 @@ elif os_name == "Linux":
     DRIVE = "/home/bhavana/sumit/python"
     SPLIT_PATTERN = "/"
     PLATFORM = "lin"
+
+
+
+class PreferencesDialog(QDialog):
+    def __init__(self, current_preferences_data):
+        super().__init__()
+        self.current_preferences_data = current_preferences_data
+        self.setWindowTitle("Application Preferences")
+        self.setWindowIcon(QIcon(r"E:\Python\ccavfx\asset-manager\images\gear_cog_wheel.jpg"))
+        self.dialog_vlay = QVBoxLayout()
+        self.add_widgets()
+
+        self.setLayout(self.dialog_vlay)
+        # self.init()
+
+
+    def add_widgets(self):
+
+        print("***"*25)
+        pprint(self.current_preferences_data)
+        print("***"*25)
+        hbox_lay_01 = QHBoxLayout()     
+        proj_lbl = QLabel("Project:")
+        self.proj_combo = QComboBox()
+        hbox_lay_01.addWidget(proj_lbl)
+        hbox_lay_01.addWidget(self.proj_combo)
+        self.dialog_vlay.addLayout(hbox_lay_01)
+
+        ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
+        self.lst_wid = QListWidget()
+        self.dialog_vlay.addWidget(self.lst_wid)
+
+        self.info_lbl = QLabel()
+        self.dialog_vlay.addWidget(self.info_lbl)
+
+        self.update_btn = QPushButton("Update")
+        self.dialog_vlay.addWidget(self.update_btn)
+
 
 
 
@@ -175,7 +215,8 @@ class View(QMainWindow):
         self.mainvlay.addWidget(self.splitter)
 
     def set_geometry(self, app):
-        screen = app.desktop().screenGeometry()
+        # screen = app.desktop().screenGeometry()
+        screen = app.primaryScreen().geometry()
         width = screen.width()
         height = screen.height()
         self.setGeometry(0, 0, width, height)
@@ -284,6 +325,12 @@ class View(QMainWindow):
         file_menu.addAction(self.copy_action)
         file_menu.addAction(self.paste_action)
 
+        # Preferences menu
+        preferences_menu = menu.addMenu("Preferences")
+        self.preferences_action = QAction("Configuration Settings", self)
+
+        preferences_menu.addAction(self.preferences_action)
+
     def add_tree_wid(self):
         # self.tree_wid = QTreeWidget()
         self.tree_wid = TreeWidget()
@@ -388,7 +435,9 @@ class View(QMainWindow):
             self.tab_view_lbl.setText("Image not found!")
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)       
 
-
+    def get_user_preferences(self, current_preferences_data):
+        preferences_dialog = PreferencesDialog(current_preferences_data)
+        preferences_dialog.show()
     
 
     # def update_image_size(self):
@@ -480,6 +529,7 @@ class Controller(QObject):
         self.view.cut_action.triggered.connect(self.cut_selected_item)
         self.view.copy_action.triggered.connect(self.copy_selected_item)
         self.view.paste_action.triggered.connect(self.paste_item)
+        self.view.preferences_action.triggered.connect(self.preferences_clicked)
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
 
@@ -577,8 +627,6 @@ class Controller(QObject):
                 self.view.show_notification("The selected version has been loaded into the viewer")
             else:       
                 self.view.show_notification("You must select two items to proceed")
-
-
 
 
     def eventFilter(self, obj, event):
@@ -684,6 +732,11 @@ class Controller(QObject):
     def paste_item(self):
         msg = self.model.paste_operation()
         print(msg)
+
+    def preferences_clicked(self):
+        current_preferences_data = self.model.get_current_preferences()
+        print("current_preferences_data -- ", current_preferences_data)
+        # self.view.get_user_preferences(current_preferences_data)
 
 
 class ThumbnilWidget(QWidget):
@@ -912,122 +965,73 @@ class Model():
         parts.reverse()
 
         print("parts ---- ", parts)
-        
-        # ------------------------------------------------------------------------------------
-        # ***** Do not delete, this working code, temporary off *****
-
-        # if parts[-1] == 'render':
-        #     self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
-
-        #     thumb_wid_lst = []
-        #     for ver in os.listdir(self.thumbnil_dir_path):
-        #         self.thumbnil_widget = ThumbnilWidget(os.path.join(self.thumbnil_dir_path, ver))
-        #         # ver_wid.setStyleSheet("border: 3px double gray;")
-        #         thumb_wid_lst.append(self.thumbnil_widget)
-
-        #     if thumb_wid_lst:
-        #         return thumb_wid_lst
-        # ------------------------------------------------------------------------------------
-
-        # image_full_path, image_nm, lbl_title,, first_frame, last_frame, prj_code, shot_code
 
         self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
 
         print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
-        if PLATFORM == "lin":
-            proj_code = self.thumbnil_dir_path.split(SPLIT_PATTERN)[6]
+        # if PLATFORM == "lin":
+        #     # proj_code = self.thumbnil_dir_path.split(SPLIT_PATTERN)[6]
             
-        elif PLATFORM == "win":
-            pass
-
-        file_exts = self.get_project_extension(proj_code)
-        print("file_exts --- ", file_exts)
-
-        thumbnil_data_dict_lst = []
-        thumb_dir_name = ''
-        if os.path.isdir(self.thumbnil_dir_path):
-            thumb_dir_name = self.thumbnil_dir_path
-            print("thumb_dir_name ---- ", thumb_dir_name)
-         
             
-            # -------------------------------------------------------------------------------------------
-            # for file_name in os.listdir(self.thumbnil_dir_path):
-            #     file_path = os.path.join(self.thumbnil_dir_path, file_name)
+        # elif PLATFORM == "win":
+        #     pass
 
+        # file_exts = self.get_project_extension(proj_code)
+        # print("file_exts --- ", file_exts)
 
-            #     if file_name.lower().endswith((".jpg", ".jpeg")):
-            #         thumbnil_data_dict = {}
-            #         image_full_path = os.path.join(self.thumbnil_dir_path, file_name)
+        proj_code = parts[1]
 
-            #         thumbnil_data_dict['lbl_title'] = file_name.split('.')[0]
-            #         thumbnil_data_dict['image_full_path'] = image_full_path
-            #         thumbnil_data_dict['first_frame'] = random.randint(1001, 1009)
-            #         thumbnil_data_dict['last_frame'] = random.randint(1100, 1200)
-            #         thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
-            #         thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
-            
-            #         thumbnil_data_dict_lst.append(thumbnil_data_dict)
+        if len(parts) >= 2:
+            ext_list = self.get_project_extension(proj_code)
+            print("file_exts ---- ", ext_list)
+            print("type --- ", type(ext_list))
+            ext_tuple = tuple(ext_list)
         
 
-            # if thumbnil_data_dict_lst:
-            #     thumb_wid_lst = []
-            #     for img_data_dict in thumbnil_data_dict_lst:
-            #         pprint(img_data_dict)
-            #         print("***"*10)
-            #         self.thumbnil_widget = ThumbnilWidget(img_data_dict)
-            #         thumb_wid_lst.append(self.thumbnil_widget)
-                        
-            #     if thumb_wid_lst:
-            #         return thumb_wid_lst
-            # ------------------------------------------------------------------------------------------
+            thumbnil_data_dict_lst = []
+            thumb_dir_name = ''
+            if os.path.isdir(self.thumbnil_dir_path):
+                thumb_dir_name = self.thumbnil_dir_path
+                print("thumb_dir_name ---- ", thumb_dir_name)
+                # print("project code --- ", thumb_dir_name.split(SPLIT_PATTERN)[2])
+                    
 
-            for file_name in os.listdir(self.thumbnil_dir_path):
-                if file_name.lower().endswith((".jpg", ".jpeg")):
-                    thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
+                for file_name in os.listdir(self.thumbnil_dir_path):
+                    # if file_name.lower().endswith((".jpg", ".jpeg")):
+                    if file_name.lower().endswith(ext_tuple):
+                        thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
+                        thumbnil_data_dict_lst.append(thumbnil_data_dict)
+
+
+            elif os.path.isfile(self.thumbnil_dir_path):
+                thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
+                print("thumb_dir_name === ", thumb_dir_name)
+                # file_name = self.thumbnil_dir_path.split("\\")[-1]
+                
+                file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
+                print("file_name ---- ", file_name)
+                # if file_name.lower().endswith((".jpg", ".jpeg")):
+                if file_name.lower().endswith(ext_tuple):
+                    thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=False)
+                    print("thumbnil_data_dict --- ", thumbnil_data_dict)
                     thumbnil_data_dict_lst.append(thumbnil_data_dict)
 
-
-        # ******************************
-        # self.thumbnil_dir_path ---  E:\demo_projects_02\proj_01\seq\proj_01_00\proj_01_00_10\render\v008
-        # {'first_frame': 1009,
-        # 'image_full_path': 'E:\\demo_projects_02\\proj_01\\seq\\proj_01_00\\proj_01_00_10\\render\\v008\\pexels-alana-sousa-1723789-17476693.jpg',
-        # 'last_frame': 1106,
-        # 'lbl_title': 'pexels-alana-sousa-1723789-17476693',
-        # 'prj_code': 'proj_01',
-        # 'shot_code': 'proj_01_00_10'}
-        # ******************************
-        # ******************************
-        # ('  \n'
-        # '            Project - proj_01\n'
-        # '            Shot - proj_01_00_10\n'       
-        # '            Frame range - 1009 - 1106  \n'
-        # '        ')
-        # ******************************
-
-        elif os.path.isfile(self.thumbnil_dir_path):
-            thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
-            print("thumb_dir_name === ", thumb_dir_name)
-            # file_name = self.thumbnil_dir_path.split("\\")[-1]
+            if thumbnil_data_dict_lst:
+                thumb_wid_lst = []
+                for img_data_dict in thumbnil_data_dict_lst:
+                    pprint(img_data_dict)
+                    print("***"*10)
+                    self.thumbnil_widget = ThumbnilWidget(img_data_dict)
+                    thumb_wid_lst.append(self.thumbnil_widget)
+                        
+                if thumb_wid_lst:
+                    return thumb_wid_lst, thumb_dir_name
+            else:
+                print("empty thumb list")
+                return [], self.thumbnil_dir_path
             
-            file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
-            print("file_name ---- ", file_name)
-            if file_name.lower().endswith((".jpg", ".jpeg")):
-                thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=False)
-                print("thumbnil_data_dict --- ", thumbnil_data_dict)
-                thumbnil_data_dict_lst.append(thumbnil_data_dict)
-
-        if thumbnil_data_dict_lst:
-            thumb_wid_lst = []
-            for img_data_dict in thumbnil_data_dict_lst:
-                pprint(img_data_dict)
-                print("***"*10)
-                self.thumbnil_widget = ThumbnilWidget(img_data_dict)
-                thumb_wid_lst.append(self.thumbnil_widget)
-                    
-            if thumb_wid_lst:
-                return thumb_wid_lst, thumb_dir_name
         else:
-            print("empty thumb list")
+            print("Please select a project or a post-prefix directory.")  
             return [], self.thumbnil_dir_path
          
     def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
@@ -1077,7 +1081,18 @@ class Model():
     def paste_operation(self):
         return "Paste Operation"
 
+    def get_current_preferences(self):
+        json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
+        print("json_path --- ", json_path)
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+                print(f"Successful read JSON file: {e}")
+                return data
 
+        except Exception as e:
+            print(f"Error reading JSON: {e}")
+            return []        
 
 def create_json_file(app_dir_path):
     jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
@@ -1093,7 +1108,6 @@ def create_json_file(app_dir_path):
     with open(jsn_fle_pth, "w") as json_file:
         json.dump(project, json_file, indent=4)
     print(f"[config.json] created successfully! \n {jsn_fle_pth}")
-
 
 def setup_config():
     home_dir = os.path.expanduser('~')
