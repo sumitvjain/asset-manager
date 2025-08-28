@@ -33,7 +33,7 @@ from PySide2.QtWidgets import (
     QComboBox
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
-from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject
+from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
@@ -54,41 +54,97 @@ elif os_name == "Linux":
 
 
 class PreferencesDialog(QDialog):
-    def __init__(self, current_preferences_data):
-        super().__init__()
-        self.current_preferences_data = current_preferences_data
+    def __init__(self, existing_prefs_data, parent=None, ):
+        super().__init__(parent)
+        self.existing_prefs_data = existing_prefs_data
+        self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
         self.setWindowTitle("Application Preferences")
         self.setWindowIcon(QIcon(r"E:\Python\ccavfx\asset-manager\images\gear_cog_wheel.jpg"))
         self.dialog_vlay = QVBoxLayout()
         self.add_widgets()
-
         self.setLayout(self.dialog_vlay)
-        # self.init()
+    #     self.init()
 
+
+    # def init(self):
+    #     self.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
+    #     self.update_btn.clicked.connect(self.update_btn_clicked)
 
     def add_widgets(self):
 
         print("***"*25)
-        pprint(self.current_preferences_data)
+        pprint(self.existing_prefs_data)
         print("***"*25)
         hbox_lay_01 = QHBoxLayout()     
         proj_lbl = QLabel("Project:")
-        self.proj_combo = QComboBox()
+        self.proj_combo = QComboBox()      
+        existing_prefs_proj_lst = list(self.existing_prefs_data.keys())
+        self.proj_combo.addItems(['-- Select Project --'] + existing_prefs_proj_lst)
+        
+
         hbox_lay_01.addWidget(proj_lbl)
         hbox_lay_01.addWidget(self.proj_combo)
         self.dialog_vlay.addLayout(hbox_lay_01)
 
-        ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
         self.lst_wid = QListWidget()
         self.dialog_vlay.addWidget(self.lst_wid)
 
         self.info_lbl = QLabel()
         self.dialog_vlay.addWidget(self.info_lbl)
 
+        btn_hlay = QHBoxLayout()
+        self.cancel_btn = QPushButton("Close")
+        icon = QApplication.style().standardIcon(QStyle.SP_DialogCloseButton)
+        self.cancel_btn.setIcon(icon)
+
+
         self.update_btn = QPushButton("Update")
-        self.dialog_vlay.addWidget(self.update_btn)
+        icon = QApplication.style().standardIcon(QStyle.SP_DialogOkButton)
+        self.update_btn.setIcon(icon)
+        self.toggle_button_state()
 
+        btn_hlay.addWidget(self.cancel_btn)
+        btn_hlay.addWidget(self.update_btn)
+        self.dialog_vlay.addLayout(btn_hlay)
 
+    def set_extension_lst(self, proj_ext_lst):
+        selected_proj = self.get_current_project_code()
+        if selected_proj != '-- Select Project --':
+            self.lst_wid.clear()
+            # proj_ext_lst = self.existing_prefs_data[selected_proj]['extension']
+            
+            for ext in self.ext_lst:
+                item = QListWidgetItem(ext)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                if ext in proj_ext_lst:
+                    item.setCheckState(Qt.Checked)
+                else:
+                    item.setCheckState(Qt.Unchecked)
+
+                self.lst_wid.addItem(item)
+
+        elif selected_proj == '-- Select Project --':
+            self.lst_wid.clear()
+
+        self.toggle_button_state()
+
+    def get_checked_extension(self):
+        self.checked_item_nm_lst = []
+        for item_index in range(self.lst_wid.count()):
+            lst_item = self.lst_wid.item(item_index)
+            if lst_item.checkState() == Qt.Checked:
+                self.checked_item_nm_lst.append(lst_item.text())
+
+        return self.checked_item_nm_lst
+
+    def toggle_button_state(self):
+        if self.proj_combo.currentText()  == '-- Select Project --':
+            self.update_btn.setEnabled(False)
+        else:
+            self.update_btn.setEnabled(True)
+
+    def get_current_project_code(self):
+        return self.proj_combo.currentText()
 
 
 class TreeWidget(QTreeWidget):
@@ -435,10 +491,13 @@ class View(QMainWindow):
             self.tab_view_lbl.setText("Image not found!")
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)       
 
-    def get_user_preferences(self, current_preferences_data):
-        preferences_dialog = PreferencesDialog(current_preferences_data)
-        preferences_dialog.show()
-    
+    def open_pref_dialog(self, existing_prefs_data):
+        prefs_window = PreferencesDialog(existing_prefs_data, self)
+        if prefs_window:
+            # prefs_window.exec_()
+            prefs_window.show()
+
+        return prefs_window
 
     # def update_image_size(self):
     #     if self.pixmap:
@@ -533,12 +592,28 @@ class Controller(QObject):
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
 
-        
+        # self.view.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
+        # self.view.prefs_window.update_btn.clicked.connect(self.update_btn_clicked)    
 
         # self.exr_action.triggered.connect(self.load_in_viewer)
 
 
         # self.model.ver_wid.exr_action.triggered.connect(self.load_exr_in_viewer)
+
+    def proj_combo_index_changed(self):
+        # self.view.prefs_window.set_extension_lst()
+        proj_code = self.prefs_window.get_current_project_code()
+        ext_list = self.model.get_project_extension(proj_code)
+        self.prefs_window.set_extension_lst(ext_list)
+
+    def update_btn_clicked(self):
+        # new_extensions = self.view.prefs_window.get_checked_extension()
+        new_extensions = self.prefs_window.get_checked_extension()
+        print("new_extensions --- ", new_extensions)
+        selected_proj = self.prefs_window.proj_combo.currentText() 
+        self.model.overwrite_config(new_extensions, selected_proj)
+        self.prefs_window.update_btn.setEnabled(False)
+
 
     def on_item_clicked(self, item, column):
         # print("item --- ", item)
@@ -734,9 +809,14 @@ class Controller(QObject):
         print(msg)
 
     def preferences_clicked(self):
-        current_preferences_data = self.model.get_current_preferences()
-        print("current_preferences_data -- ", current_preferences_data)
-        # self.view.get_user_preferences(current_preferences_data)
+        existing_prefs_data = self.model.get_current_preferences()
+        print("existing_prefs_data -- ", existing_prefs_data)
+        self.prefs_window = self.view.open_pref_dialog(existing_prefs_data)
+
+        # self.view.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
+        # self.view.prefs_window.update_btn.clicked.connect(self.update_btn_clicked)    
+        self.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
+        self.prefs_window.update_btn.clicked.connect(self.update_btn_clicked) 
 
 
 class ThumbnilWidget(QWidget):
@@ -924,6 +1004,7 @@ class ThumbnilWidget(QWidget):
 class Model():
     def __init__(self):
         self.thumbnil_widget = None
+        self.json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
 
     def get_invoked_action_path(self, invoked_action):
         child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
@@ -938,9 +1019,9 @@ class Model():
 
     # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
-        json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
+        # json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
         try:
-            with open(json_path, "r") as f:
+            with open(self.json_path, "r") as f:
                 data = json.load(f)
 
             project = data.get(proj_code)
@@ -1082,17 +1163,28 @@ class Model():
         return "Paste Operation"
 
     def get_current_preferences(self):
-        json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
-        print("json_path --- ", json_path)
+        # json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
+
         try:
-            with open(json_path, "r") as f:
+            with open(self.json_path, "r") as f:
                 data = json.load(f)
-                print(f"Successful read JSON file: {e}")
+                print(f"Successful read JSON file")
                 return data
 
         except Exception as e:
             print(f"Error reading JSON: {e}")
             return []        
+
+    def overwrite_config(self, new_extensions, selected_proj):
+        with open(self.json_path, 'r') as f:
+            data = json.load(f)
+
+        data[selected_proj]["extension"] = new_extensions
+
+        with open(self.json_path, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Updated extensions for {selected_proj}: {new_extensions}")
+
 
 def create_json_file(app_dir_path):
     jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
