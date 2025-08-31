@@ -41,24 +41,25 @@ import json
 import platform
 from platformdirs import user_documents_dir
 from pathlib import Path
+import re
 
 
-platform_name = platform.system()
+# platform_name = platform.system()
 DOCUMENTS_DIRPATH = user_documents_dir()
 CONFIG_FILENAME = "config.json"
 APP_DIRNAME = ".app"
 # CONFIG_FILEPATH = os.path.join(os.path.expanduser('~'), "Documents", APP_DIRNAME, CONFIG_FILENAME )
 CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
 
-if platform_name == "Windows":
-    # CURRENT_DRIVE = "E:\\"      # TODO: remove hardcoded path, make it dynamic when drap and drop functionclity is called.
-    CURRENT_DRIVE = Path.cwd().anchor
-    SPLIT_PATTERN = "\\"
-    PLATFORM = "win"
-elif platform_name == "Linux":
-    CURRENT_DRIVE = "/home/bhavana/sumit/python"        # TODO : remove this
-    SPLIT_PATTERN = "/"
-    PLATFORM = "lin"
+# if platform_name == "Windows":
+#     # CURRENT_DRIVE = "E:\\"      # TODO: remove hardcoded path, make it dynamic when drap and drop functionclity is called.
+#     CURRENT_DRIVE = Path.cwd().anchor
+#     SPLIT_PATTERN = "\\"
+#     PLATFORM = "win"
+# elif platform_name == "Linux":
+#     CURRENT_DRIVE = "/home/bhavana/sumit/python"        # TODO : remove this
+#     SPLIT_PATTERN = "/"
+#     PLATFORM = "lin"
 
 
 
@@ -161,9 +162,11 @@ class PreferencesDialog(QDialog):
 
 
 class TreeWidget(QTreeWidget):
+    
     itemPathClicked = Signal(str)
     def __init__(self):
         super().__init__()
+        self.drive = None
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
         # self.itemClicked.connect(self.on_item_clicked)
@@ -225,6 +228,10 @@ class TreeWidget(QTreeWidget):
                 # url = drop_urls[0]
                 path = url.toLocalFile()        # TODO : improve logic to support mutiple folder dropped (need to add for loop)
                 print("path --- ", path)
+                if self.drive == None:
+                    # self.drive = path.split(SPLIT_PATTERN)[0]
+                    self.drive = re.split(r"[\\/]", path)[0]
+                    print("self.drive --- ", self.drive)
 
                 if os.path.isdir(path):
                     if len(os.listdir(path)) > 0:
@@ -672,7 +679,9 @@ class Controller(QObject):
     def on_item_clicked(self, item, column):
         # print("item --- ", item)
         # print("column --- ", column)
-        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
+        print('self.view.tree_wid.drive ---- ', self.view.tree_wid.drive)
+        drive = self.view.tree_wid.drive
+        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column, drive)
 
         if thumbnil_wid_items_lst:
             self.view.clear_lst_wid()
@@ -986,7 +995,7 @@ class ThumbnilWidget(QWidget):
         # image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
-        scaled = pixmap.scaled(60, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        scaled = pixmap.scaled(120, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         lbl_full_path = QLabel()
         lbl_full_path.setText(f"Path-{image_full_path}")
@@ -1091,7 +1100,7 @@ class Model():
             print(f"Error reading JSON: {e}")
             return []
     
-    def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int):
+    def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int, drive: str):
 
         parts = []
         it = item
@@ -1103,8 +1112,10 @@ class Model():
         parts.reverse()
 
         print("parts ---- ", parts)
-
-        self.thumbnil_dir_path = os.path.join(CURRENT_DRIVE, *parts)
+        
+        # self.thumbnil_dir_path = os.path.join(CURRENT_DRIVE, *parts)
+        self.thumbnil_dir_path = os.path.join(drive + os.sep, *parts)
+        
 
         print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
         # if PLATFORM == "lin":
@@ -1135,6 +1146,8 @@ class Model():
                 print("thumb_dir_name ---- ", thumb_dir_name)
                 # print("project code --- ", thumb_dir_name.split(SPLIT_PATTERN)[2])
                     
+                if not is_available_in_dir:
+                    is_available_in_dir = True                
 
                 for file_name in os.listdir(self.thumbnil_dir_path):
                     # if file_name.lower().endswith((".jpg", ".jpeg")):
@@ -1142,8 +1155,7 @@ class Model():
                         thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
                         thumbnil_data_dict_lst.append(thumbnil_data_dict)
                         
-                    if not is_available_in_dir:
-                        is_available_in_dir = True
+
 
 
             elif os.path.isfile(self.thumbnil_dir_path):
@@ -1151,7 +1163,8 @@ class Model():
                 print("thumb_dir_name === ", thumb_dir_name)
                 # file_name = self.thumbnil_dir_path.split("\\")[-1]
                 
-                file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
+                # file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
+                file_name = re.split(r"[\\/]", self.thumbnil_dir_path)[-1]
                 print("file_name ---- ", file_name)
                 # if file_name.lower().endswith((".jpg", ".jpeg")):
                 if file_name.lower().endswith(ext_tuple):
@@ -1202,9 +1215,12 @@ class Model():
 
         # thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
         # thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
-        thumbnil_data_dict['prj_code'] = image_full_path.split(SPLIT_PATTERN)[2]
-        thumbnil_data_dict['shot_code'] =image_full_path.split(SPLIT_PATTERN)[5]
+        # thumbnil_data_dict['prj_code'] = image_full_path.split(SPLIT_PATTERN)[2]
+        # thumbnil_data_dict['shot_code'] = image_full_path.split(SPLIT_PATTERN)[5]
         
+        thumbnil_data_dict['prj_code'] = re.split(r"[\\/]", image_full_path)[2]
+        thumbnil_data_dict['shot_code'] =re.split(r"[\\/]", image_full_path)[5]
+
         return thumbnil_data_dict
             
     def get_file_data(self):
