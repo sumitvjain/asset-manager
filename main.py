@@ -39,15 +39,24 @@ import sys, os
 import random
 import json
 import platform
+from platformdirs import user_documents_dir
+from pathlib import Path
 
-os_name = platform.system()
 
-if os_name == "Windows":
-    DRIVE = "E:\\"
+platform_name = platform.system()
+DOCUMENTS_DIRPATH = user_documents_dir()
+CONFIG_FILENAME = "config.json"
+APP_DIRNAME = ".app"
+# CONFIG_FILEPATH = os.path.join(os.path.expanduser('~'), "Documents", APP_DIRNAME, CONFIG_FILENAME )
+CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
+
+if platform_name == "Windows":
+    # CURRENT_DRIVE = "E:\\"      # TODO: remove hardcoded path, make it dynamic when drap and drop functionclity is called.
+    CURRENT_DRIVE = Path.cwd().anchor
     SPLIT_PATTERN = "\\"
     PLATFORM = "win"
-elif os_name == "Linux":
-    DRIVE = "/home/bhavana/sumit/python"
+elif platform_name == "Linux":
+    CURRENT_DRIVE = "/home/bhavana/sumit/python"        # TODO : remove this
     SPLIT_PATTERN = "/"
     PLATFORM = "lin"
 
@@ -59,7 +68,11 @@ class PreferencesDialog(QDialog):
         self.existing_prefs_data = existing_prefs_data
         self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
         self.setWindowTitle("Application Preferences")
-        self.setWindowIcon(QIcon(r"E:\Python\ccavfx\asset-manager\images\gear_cog_wheel.jpg"))
+        # icon_path = os.path.join(os.getcwd(), 'icon', 'gear_cog_wheel.jpg')
+        # self.setWindowIcon(QIcon(r"E:\Python\ccavfx\asset-manager\icon\gear_cog_wheel.jpg"))
+        icon_path = Path.cwd() / "icon" / "gear_cog_wheel.jpg"
+        print("icon_path  --- ", icon_path)
+        self.setWindowIcon(QIcon(str(icon_path)))
         self.dialog_vlay = QVBoxLayout()
         self.add_widgets()
         self.setLayout(self.dialog_vlay)
@@ -93,9 +106,9 @@ class PreferencesDialog(QDialog):
         self.dialog_vlay.addWidget(self.info_lbl)
 
         btn_hlay = QHBoxLayout()
-        self.cancel_btn = QPushButton("Close")
+        self.close_btn = QPushButton("Close")
         icon = QApplication.style().standardIcon(QStyle.SP_DialogCloseButton)
-        self.cancel_btn.setIcon(icon)
+        self.close_btn.setIcon(icon)
 
 
         self.update_btn = QPushButton("Update")
@@ -103,7 +116,7 @@ class PreferencesDialog(QDialog):
         self.update_btn.setIcon(icon)
         self.toggle_button_state()
 
-        btn_hlay.addWidget(self.cancel_btn)
+        btn_hlay.addWidget(self.close_btn)
         btn_hlay.addWidget(self.update_btn)
         self.dialog_vlay.addLayout(btn_hlay)
 
@@ -151,7 +164,7 @@ class TreeWidget(QTreeWidget):
     itemPathClicked = Signal(str)
     def __init__(self):
         super().__init__()
-
+        self.setHeaderHidden(True)
         self.setAcceptDrops(True)
         # self.itemClicked.connect(self.on_item_clicked)
 
@@ -169,29 +182,69 @@ class TreeWidget(QTreeWidget):
         else:
             e.ignore()
 
+    # def dropEvent(self, event):
+    #     if event.mimeData().hasUrls():
+    #         drop_urls = event.mimeData().urls()
+    #         print("drop_urls --- ", drop_urls)
+    #         print("***"*10)
+    #         for url_item in drop_urls:
+    #             print("path --- ", url_item.toLocalFile())
+    #         print("***"*10)
+    #         url = drop_urls[0]
+    #         path = url.toLocalFile()        # TODO : improve logic to support mutiple folder dropped (need to add for loop)
+
+    #         if os.path.isdir(path):
+    #             if len(os.listdir(path)) > 0:
+    #                 self.clear()
+
+    #                 base_nm = os.path.basename(path)
+    #                 tree_item = QTreeWidgetItem([base_nm, "Folder"])    
+    #                 self.addTopLevelItem(tree_item)
+
+    #                 self.build_tree_view(path, tree_item)
+    #                 event.accept()
+    #             else:
+    #                 print("Directory check complete: no content found.")
+    #         else:
+    #             print("This is not directory path")
+    #             event.ignore()
+    #     else:
+    #         event.ignore()
+
+
+
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
-            url = drop_urls[0]
-            path = url.toLocalFile()
+            print("drop_urls --- ", drop_urls)
+            print("***"*10)
+            self.clear()
+            for url in drop_urls:
+                
+            
+                # url = drop_urls[0]
+                path = url.toLocalFile()        # TODO : improve logic to support mutiple folder dropped (need to add for loop)
+                print("path --- ", path)
 
-            if os.path.isdir(path):
-                if len(os.listdir(path)) > 0:
-                    self.clear()
+                if os.path.isdir(path):
+                    if len(os.listdir(path)) > 0:
+                        # self.clear()
 
-                    base_nm = os.path.basename(path)
-                    tree_item = QTreeWidgetItem([base_nm, "Folder"])
-                    self.addTopLevelItem(tree_item)
+                        base_nm = os.path.basename(path)
+                        tree_item = QTreeWidgetItem([base_nm, "Folder"])    
+                        self.addTopLevelItem(tree_item)
 
-                    self.build_tree_view(path, tree_item)
-                    event.accept()
+                        self.build_tree_view(path, tree_item)
+                        event.accept()
+                    else:
+                        print("Directory check complete: no content found.")
                 else:
-                    print("Directory check complete: no content found.")
+                    print("This is not directory path")
+                    event.ignore()
             else:
-                print("This is not directory path")
                 event.ignore()
-        else:
-            event.ignore()
+
+        print("***"*10)
 
     def enterEvent(self, event):
         """When mouse enters widget"""
@@ -612,13 +665,14 @@ class Controller(QObject):
         print("new_extensions --- ", new_extensions)
         selected_proj = self.prefs_window.proj_combo.currentText() 
         self.model.overwrite_config(new_extensions, selected_proj)
-        self.prefs_window.update_btn.setEnabled(False)
+        # self.prefs_window.update_btn.setEnabled(False)
+
 
 
     def on_item_clicked(self, item, column):
         # print("item --- ", item)
         # print("column --- ", column)
-        thumbnil_wid_items_lst, thumb_dir_name = self.model.get_thumbnil_wid_lst(item, column)
+        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
 
         if thumbnil_wid_items_lst:
             self.view.clear_lst_wid()
@@ -631,7 +685,8 @@ class Controller(QObject):
         else:
             self.view.clear_lst_wid()
             self.view.set_lbl_thumbnil_path(thumb_dir_name)
-            self.view.show_notification("Thumbnil not found.")
+            # self.view.show_notification("Thumbnil not found.")
+            self.view.show_notification(msg)
 
     def handle_context_menu(self, widget, pos):
         # print("widget --- ", widget)
@@ -817,6 +872,7 @@ class Controller(QObject):
         # self.view.prefs_window.update_btn.clicked.connect(self.update_btn_clicked)    
         self.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
         self.prefs_window.update_btn.clicked.connect(self.update_btn_clicked) 
+        self.prefs_window.close_btn.clicked.connect(self.prefs_window.close)
 
 
 class ThumbnilWidget(QWidget):
@@ -837,6 +893,7 @@ class ThumbnilWidget(QWidget):
         self.mainhlay = QHBoxLayout(self)
         self.mainhlay.setContentsMargins(0,0,0,0)
         self.mainhlay.setSpacing(0)
+
         self.add_widgets()
         self.setLayout(self.mainhlay)
 
@@ -1004,7 +1061,7 @@ class ThumbnilWidget(QWidget):
 class Model():
     def __init__(self):
         self.thumbnil_widget = None
-        self.json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
+        self.json_path = CONFIG_FILEPATH
 
     def get_invoked_action_path(self, invoked_action):
         child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
@@ -1047,7 +1104,7 @@ class Model():
 
         print("parts ---- ", parts)
 
-        self.thumbnil_dir_path = os.path.join(DRIVE, *parts)
+        self.thumbnil_dir_path = os.path.join(CURRENT_DRIVE, *parts)
 
         print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
         # if PLATFORM == "lin":
@@ -1071,6 +1128,8 @@ class Model():
 
             thumbnil_data_dict_lst = []
             thumb_dir_name = ''
+            is_available_in_dir = False
+
             if os.path.isdir(self.thumbnil_dir_path):
                 thumb_dir_name = self.thumbnil_dir_path
                 print("thumb_dir_name ---- ", thumb_dir_name)
@@ -1082,6 +1141,9 @@ class Model():
                     if file_name.lower().endswith(ext_tuple):
                         thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
                         thumbnil_data_dict_lst.append(thumbnil_data_dict)
+                        
+                    if not is_available_in_dir:
+                        is_available_in_dir = True
 
 
             elif os.path.isfile(self.thumbnil_dir_path):
@@ -1099,25 +1161,35 @@ class Model():
 
             if thumbnil_data_dict_lst:
                 thumb_wid_lst = []
+
                 for img_data_dict in thumbnil_data_dict_lst:
                     pprint(img_data_dict)
                     print("***"*10)
+
                     self.thumbnil_widget = ThumbnilWidget(img_data_dict)
                     thumb_wid_lst.append(self.thumbnil_widget)
                         
                 if thumb_wid_lst:
-                    return thumb_wid_lst, thumb_dir_name
+                    msg = "Images found."
+                    return thumb_wid_lst, thumb_dir_name, msg
             else:
-                print("empty thumb list")
-                return [], self.thumbnil_dir_path
+                if is_available_in_dir:
+                    msg = "No images found in the directory." 
+                    print("empty thumb list")
+                    return [], self.thumbnil_dir_path, msg
+                else:
+                    msg = f"Invalid or unsupported image format - [{file_name.split('.')[-1]}]"
+                    return [], self.thumbnil_dir_path, msg
             
         else:
             print("Please select a project or a post-prefix directory.")  
-            return [], self.thumbnil_dir_path
+            msg = "Please select a project or a post-prefix directory."
+            return [], self.thumbnil_dir_path, msg
          
     def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
         # if file_name.lower().endswith((".jpg", ".jpeg")):
         thumbnil_data_dict = {}
+        
         if is_thumb_dir:
             image_full_path = os.path.join(self.thumbnil_dir_path, file_name)
         else:
@@ -1187,7 +1259,8 @@ class Model():
 
 
 def create_json_file(app_dir_path):
-    jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
+    # jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
+    jsn_fle_pth = os.path.join(app_dir_path, CONFIG_FILENAME)
     # json_data = get_default_data()
 
     project = {}
@@ -1199,19 +1272,25 @@ def create_json_file(app_dir_path):
 
     with open(jsn_fle_pth, "w") as json_file:
         json.dump(project, json_file, indent=4)
-    print(f"[config.json] created successfully! \n {jsn_fle_pth}")
+    print(f"[{CONFIG_FILENAME}] created successfully! \n {jsn_fle_pth}")
 
 def setup_config():
-    home_dir = os.path.expanduser('~')
-    documents_path = os.path.join(home_dir, "Documents")
-    documents_dir_lst = os.listdir(documents_path)
-    app_dir_path = os.path.join(documents_path, ".app")
+    # home_dir = os.path.expanduser('~')
+    # documents_path = os.path.join(home_dir, "Documents")    # TODO: find the env variable to get documents path in wind.
+    # documents_dir_lst = os.listdir(documents_path)
+    # app_dir_path = os.path.join(documents_path, ".app")
 
-    if not ".app" in documents_dir_lst:       
-        os.makedirs(app_dir_path)
+    # app_dir_path = os.path.join(DOCUMENTS_DIRPATH, ".app")
+    app_dir_path = Path(DOCUMENTS_DIRPATH) / "/app"
+
+    # if not ".app" in documents_dir_lst:       # TODO: check if folder/file exists (os.path.exits())
+    if not os.path.exists(app_dir_path):
+        # os.makedirs(app_dir_path)
+        app_dir_path.mkdir(exist_ok=True)
         create_json_file(app_dir_path)
 
-    elif not "config.json" in os.listdir(app_dir_path):
+    # elif not "config.json" in os.listdir(app_dir_path):     # TODO: same as above
+    elif not CONFIG_FILENAME in os.listdir(app_dir_path):
         create_json_file(app_dir_path)
  
 
