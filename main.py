@@ -44,23 +44,11 @@ from pathlib import Path
 import re
 
 
-# platform_name = platform.system()
+
 DOCUMENTS_DIRPATH = user_documents_dir()
 CONFIG_FILENAME = "config.json"
 APP_DIRNAME = ".app"
-# CONFIG_FILEPATH = os.path.join(os.path.expanduser('~'), "Documents", APP_DIRNAME, CONFIG_FILENAME )
 CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
-
-# if platform_name == "Windows":
-#     # CURRENT_DRIVE = "E:\\"      # TODO: remove hardcoded path, make it dynamic when drap and drop functionclity is called.
-#     CURRENT_DRIVE = Path.cwd().anchor
-#     SPLIT_PATTERN = "\\"
-#     PLATFORM = "win"
-# elif platform_name == "Linux":
-#     CURRENT_DRIVE = "/home/bhavana/sumit/python"        # TODO : remove this
-#     SPLIT_PATTERN = "/"
-#     PLATFORM = "lin"
-
 
 
 class PreferencesDialog(QDialog):
@@ -69,26 +57,14 @@ class PreferencesDialog(QDialog):
         self.existing_prefs_data = existing_prefs_data
         self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
         self.setWindowTitle("Application Preferences")
-        # icon_path = os.path.join(os.getcwd(), 'icon', 'gear_cog_wheel.jpg')
-        # self.setWindowIcon(QIcon(r"E:\Python\ccavfx\asset-manager\icon\gear_cog_wheel.jpg"))
         icon_path = Path.cwd() / "icon" / "gear_cog_wheel.jpg"
-        print("icon_path  --- ", icon_path)
         self.setWindowIcon(QIcon(str(icon_path)))
         self.dialog_vlay = QVBoxLayout()
         self.add_widgets()
         self.setLayout(self.dialog_vlay)
-    #     self.init()
 
-
-    # def init(self):
-    #     self.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
-    #     self.update_btn.clicked.connect(self.update_btn_clicked)
 
     def add_widgets(self):
-
-        print("***"*25)
-        pprint(self.existing_prefs_data)
-        print("***"*25)
         hbox_lay_01 = QHBoxLayout()     
         proj_lbl = QLabel("Project:")
         self.proj_combo = QComboBox()      
@@ -125,7 +101,6 @@ class PreferencesDialog(QDialog):
         selected_proj = self.get_current_project_code()
         if selected_proj != '-- Select Project --':
             self.lst_wid.clear()
-            # proj_ext_lst = self.existing_prefs_data[selected_proj]['extension']
             
             for ext in self.ext_lst:
                 item = QListWidgetItem(ext)
@@ -169,80 +144,37 @@ class TreeWidget(QTreeWidget):
         self.drive = None
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
-        # self.itemClicked.connect(self.on_item_clicked)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         if event.mimeData().hasUrls():
-            # print("dragEnterEvent --------- ")
             event.acceptProposedAction()
         else:
             event.ignore()
     
     def dragMoveEvent(self, e:QDragMoveEvent):
         if e.mimeData().hasUrls():
-            # print("dragMoveEvent --------- ")
             e.acceptProposedAction()
         else:
             e.ignore()
 
-    # def dropEvent(self, event):
-    #     if event.mimeData().hasUrls():
-    #         drop_urls = event.mimeData().urls()
-    #         print("drop_urls --- ", drop_urls)
-    #         print("***"*10)
-    #         for url_item in drop_urls:
-    #             print("path --- ", url_item.toLocalFile())
-    #         print("***"*10)
-    #         url = drop_urls[0]
-    #         path = url.toLocalFile()        # TODO : improve logic to support mutiple folder dropped (need to add for loop)
-
-    #         if os.path.isdir(path):
-    #             if len(os.listdir(path)) > 0:
-    #                 self.clear()
-
-    #                 base_nm = os.path.basename(path)
-    #                 tree_item = QTreeWidgetItem([base_nm, "Folder"])    
-    #                 self.addTopLevelItem(tree_item)
-
-    #                 self.build_tree_view(path, tree_item)
-    #                 event.accept()
-    #             else:
-    #                 print("Directory check complete: no content found.")
-    #         else:
-    #             print("This is not directory path")
-    #             event.ignore()
-    #     else:
-    #         event.ignore()
-
-
-
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
-            print("drop_urls --- ", drop_urls)
-            print("***"*10)
             self.clear()
+
             for url in drop_urls:
-                
-            
-                # url = drop_urls[0]
-                path = url.toLocalFile()        # TODO : improve logic to support mutiple folder dropped (need to add for loop)
-                print("path --- ", path)
+                path = url.toLocalFile() 
                 if self.drive == None:
-                    # self.drive = path.split(SPLIT_PATTERN)[0]
                     self.drive = re.split(r"[\\/]", path)[0]
-                    print("self.drive --- ", self.drive)
 
                 if os.path.isdir(path):
                     if len(os.listdir(path)) > 0:
-                        # self.clear()
-
                         base_nm = os.path.basename(path)
                         tree_item = QTreeWidgetItem([base_nm, "Folder"])    
-                        self.addTopLevelItem(tree_item)
 
+                        self.addTopLevelItem(tree_item)
                         self.build_tree_view(path, tree_item)
-                        event.accept()
+                        event.accept()                    
                     else:
                         print("Directory check complete: no content found.")
                 else:
@@ -250,8 +182,6 @@ class TreeWidget(QTreeWidget):
                     event.ignore()
             else:
                 event.ignore()
-
-        print("***"*10)
 
     def enterEvent(self, event):
         """When mouse enters widget"""
@@ -303,21 +233,17 @@ class View(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.setWindowTitle("Asset Manager")
-        # self.set_style_sheet()
-        # self.setGeometry(10,30, 1580, 800)
-        # self.setFixedHeight(750)
-        # self.setFixedWidth(1600)
         self.set_geometry(app)
+
         self.pixmap = None
         self.lbl_thumb_path = None
-        # self.zoom_factor = 1.0
+        self.tree_wid = None
+
         self.scroll = QScrollArea()
         widget = QWidget()  
         self.mainvlay = QVBoxLayout()
         self.splitter = QSplitter(Qt.Horizontal)
-        # self.wid_hlay = QHBoxLayout()
-        self.tree_wid = None
-
+        
         widget.setLayout(self.mainvlay)
         self.setCentralWidget(widget)
 
@@ -326,19 +252,15 @@ class View(QMainWindow):
         self.add_lst_wid()
         self.add_viewer_wid()
 
-        #self.mainvlay.addLayout(self.wid_hlay)
-        # self.mainvlay.addLayout(self.splitter)
         self.mainvlay.addWidget(self.splitter)
 
     def set_geometry(self, app):
-        # screen = app.desktop().screenGeometry()
         screen = app.primaryScreen().geometry()
         width = screen.width()
         height = screen.height()
         self.setGeometry(0, 0, width, height)
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
-
 
     def set_style_sheet(self):
         self.setStyleSheet("""
@@ -403,10 +325,6 @@ class View(QMainWindow):
 
         self.lst_wid.setSpacing(10)
 
-        # print('self.scroll --- ', self.scroll)
-        # print('self.scroll.viewport  --- ', self.scroll.viewport())
-        # print('self.scroll.viewport.width --- ', self.scroll.viewport().width())
-
     def clear_lst_wid(self):
         self.lst_wid.clear()
 
@@ -448,9 +366,7 @@ class View(QMainWindow):
         preferences_menu.addAction(self.preferences_action)
 
     def add_tree_wid(self):
-        # self.tree_wid = QTreeWidget()
         self.tree_wid = TreeWidget()
-        #self.wid_hlay.addWidget(self.tree_wid)
         self.splitter.addWidget(self.tree_wid)
         
     def add_lst_wid(self):
@@ -469,7 +385,6 @@ class View(QMainWindow):
 
         self.lst_wid = QListWidget()
         self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
-        #self.wid_hlay.addWidget(self.lst_wid)
 
         lst_vlay.addWidget(self.lbl_thumb_path)
         lst_vlay.addWidget(self.lst_wid)
@@ -492,39 +407,10 @@ class View(QMainWindow):
         self.tab_wid = QTabWidget()
         self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
         self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
-
-        # info_hlay = QHBoxLayout()
-        # self.lbl_width = QLabel("Width: ")
-        # self.lbl_height = QLabel("Height: ")
-        # spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        # self.lbl_frame = QLabel("Frame: ")
-
-        # info_hlay.addWidget(self.lbl_width)
-        # info_hlay.addWidget(self.lbl_height)
-        # info_hlay.addItem(spacer)
-        # info_hlay.addWidget(self.lbl_frame)
-
-        # btn_hlay = QHBoxLayout()
-        # self.btn_zoom_int = QPushButton("Zoom In")
-        # self.btn_zoom_out = QPushButton("Zoom Out")
-        # self.btn_play = QPushButton("Play")
-        # self.btn_pause = QPushButton("Pause")
-
-        # btn_hlay.addWidget(self.btn_zoom_int)
-        # btn_hlay.addWidget(self.btn_zoom_out)
-        # btn_hlay.addWidget(self.btn_play)
-        # btn_hlay.addWidget(self.btn_pause)
-    
-        tab_vlay.addWidget(self.tab_wid)
-        # tab_vlay.addLayout(info_hlay)    
-
-        right_vlay.addLayout(tab_vlay)
-        # right_vlay.addLayout(btn_hlay)
-        
    
+        tab_vlay.addWidget(self.tab_wid)
+        right_vlay.addLayout(tab_vlay)    
         self.splitter.addWidget(self.viewer_wid)
-
-        # self.tab_wid.installEventFilter(self)
 
     def create_viewer_tab(self, meta=None):
         tab_view_wid = QWidget()
@@ -544,8 +430,6 @@ class View(QMainWindow):
         if not self.pixmap.isNull():
             self.tab_view_lbl.clear()
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)
-            # self.update_image_size()
- 
         else:
             self.tab_view_lbl.clear()
             self.tab_view_lbl.setText("Image not found!")
@@ -554,74 +438,18 @@ class View(QMainWindow):
     def open_pref_dialog(self, existing_prefs_data):
         prefs_window = PreferencesDialog(existing_prefs_data, self)
         if prefs_window:
-            # prefs_window.exec_()
             prefs_window.show()
 
         return prefs_window
 
-    # def update_image_size(self):
-    #     if self.pixmap:
-    #         scaled_pixmap = self.pixmap.scaled(
-    #             self.tab_view_lbl.size() * self.zoom_factor,
-    #             Qt.KeepAspectRatio,
-    #             Qt.SmoothTransformation
-    #         )
-    #         self.tab_view_lbl.setPixmap(scaled_pixmap)
-
     def show_notification(self, msg):
         QMessageBox.information(self, "Action", msg)
 
-
-    # def eventFilter(self, obj, event):
-    #     if obj == self.tab_wid and event.type() == QEvent.Wheel:
-    #         if self.tab_wid.underMouse():
-    #             zoom_in = event.angleDelta().y() > 0
-
-    #             if zoom_in:
-    #                 self.zoom_factor *= 1.1
-    #             else:
-    #                 self.zoom_factor *= 0.9
-
-    #             self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
-
-    #             self.update_image_size()
-    #             event.accept()
-    #         else:
-    #             return True
-
-    #     return super().eventFilter(obj, event)
-
-
     def wheelEvent(self, event: QWheelEvent):
-        # self.tab_wid
-        # zoom_in = event.angleDelta().y() > 0
-
-        # if zoom_in:
-        #     self.zoom_factor *= 1.1
-        # else:
-        #     self.zoom_factor *= 0.9
-
-        # self.zoom_factor = max(0.1, min(self.zoom_factor, 10.0))
-
-        # self.update_image_size()
-        # event.accept()
         event.ignore()
 
     def remove_selected(self, widget):
         self.lst_wid.takeItem(widget)
-        # sel_wid = invoked_action.parentWidget().parentWidget().parentWidget()
-        # row = self.lst_wid.row(item)
-        # self.lst_wid.takeItem(row)
-        # row = self.list_widget.row(item)
-        # self.list_widget.takeItem(row) 
-
-        # -----------------------------------------------------
-        # for i in range(self.lst_wid.count()):
-        #     item = self.lst_wid.item(i)
-        #     if self.lst_wid.itemWidget(item) == widget:
-        #         self.lst_wid.takeItem(i)
-        #         break
-        # -----------------------------------------------------
 
 
 class Controller(QObject):
@@ -631,13 +459,10 @@ class Controller(QObject):
         self.view = view
         self.zoom_factor = 1.0
         self.signal_slot()
-        # self.tree_wid_drag_drop_handler = TreeWidgetHandler(view)
-        # self.view.tree_wid.handler = self.tree_wid_drag_drop_handler
         self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
         self.view.tab_wid.installEventFilter(self)
 
-    def signal_slot(self):
-        
+    def signal_slot(self):     
         self.view.open_file_action.triggered.connect(self.open_file)
         self.view.open_folder_action.triggered.connect(self.open_folder)
         self.view.save_action.triggered.connect(self.save_file)
@@ -652,34 +477,18 @@ class Controller(QObject):
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
 
-        # self.view.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
-        # self.view.prefs_window.update_btn.clicked.connect(self.update_btn_clicked)    
-
-        # self.exr_action.triggered.connect(self.load_in_viewer)
-
-
-        # self.model.ver_wid.exr_action.triggered.connect(self.load_exr_in_viewer)
-
     def proj_combo_index_changed(self):
-        # self.view.prefs_window.set_extension_lst()
         proj_code = self.prefs_window.get_current_project_code()
         ext_list = self.model.get_project_extension(proj_code)
         self.prefs_window.set_extension_lst(ext_list)
 
     def update_btn_clicked(self):
-        # new_extensions = self.view.prefs_window.get_checked_extension()
         new_extensions = self.prefs_window.get_checked_extension()
         print("new_extensions --- ", new_extensions)
         selected_proj = self.prefs_window.proj_combo.currentText() 
         self.model.overwrite_config(new_extensions, selected_proj)
-        # self.prefs_window.update_btn.setEnabled(False)
-
-
 
     def on_item_clicked(self, item, column):
-        # print("item --- ", item)
-        # print("column --- ", column)
-        print('self.view.tree_wid.drive ---- ', self.view.tree_wid.drive)
         drive = self.view.tree_wid.drive
         thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column, drive)
 
@@ -694,24 +503,10 @@ class Controller(QObject):
         else:
             self.view.clear_lst_wid()
             self.view.set_lbl_thumbnil_path(thumb_dir_name)
-            # self.view.show_notification("Thumbnil not found.")
             self.view.show_notification(msg)
 
-    def handle_context_menu(self, widget, pos):
-        # print("widget --- ", widget)
-        # print("pos --- ", pos)
-        
+    def handle_context_menu(self, widget, pos):        
         widget.populate_menu_actions(pos)
-
-        # widget.exr_action.triggered.connect(self.load_exr_in_viewer)
-        # widget.jpg_action.triggered.connect(self.load_jpg_in_viewer)
-        # widget.mov_action.triggered.connect(self.load_mov_in_viewer)
-
-        
-        # widget.compare_action.triggered.connect(self.compare_versions)
-        # widget.rm_single_action.triggered.connect(self.remove_version)
-        # widget.rm_multi_action.triggered.connect(self.remove_multi_versions)
-
         self.action = widget.menu.exec_(widget.mapToGlobal(pos))
 
         if self.action:
@@ -722,51 +517,25 @@ class Controller(QObject):
         if invoked_action.text() in ["exr", 'jpg', 'mov', 'png']:
             result, path = self.model.get_invoked_action_path(invoked_action)
             if result:
-                print("path ----- ", path)
                 self.view.load_render_in_viewer(path)
                 self.update_image_size()
                 self.view.show_notification("Successfully loaded into viewer.")
             else:
                 self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
+
         elif self.action.text() == "Remove":
-            # print("pos --- ", pos)
-            # item = self.view.lst_wid.itemAt(pos)
-            # print("item ---- ", item)
             selected_items = self.view.lst_wid.selectedItems()
-            print("selected_items len -- ", len(selected_items))
             rows = sorted([self.view.lst_wid.row(it) for it in selected_items], reverse=True)
 
             for row in rows:
                 self.view.remove_selected(row) 
 
-            # for item in selected_items:
-                
-                # widget = self.view.lst_wid.row(item)
-                # print("widget --- ", widget)
-                # self.view.lst_wid.takeItem(row)   
-                # self.view.remove_selected(item)         
-
-            # widget = invoked_action.parent().parent()   
-            # print("widget === ", widget)    
-            # self.view.remove_selected(widget)
-
-            # -----------------------------------------------------------------------------------------------------
-            # child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
-            # for child in child_widgets:
-            #     if isinstance(child, QLabel):
-            #         print("child text --- ", child.text())
-            #     if child.objectName():
-            #         print(f"{child.__class__.__name__} objectName: {child.objectName()}")
-            # ------------------------------------------------------------------------------------------------------
-
-            # self.load_exr_in_viewer()
         elif self.action.text() == "Compare":
             selected_items = self.view.lst_wid.selectedItems()
             if len(selected_items) == 2:
                 self.view.show_notification("The selected version has been loaded into the viewer")
             else:       
                 self.view.show_notification("You must select two items to proceed")
-
 
     def eventFilter(self, obj, event):
         if obj == self.view.tab_wid and event.type() == QEvent.Wheel:
@@ -813,29 +582,6 @@ class Controller(QObject):
             )
             self.view.tab_view_lbl.setPixmap(scaled_pixmap)
 
-
-    # def load_exr_in_viewer(self):
-
-        # print("self.action ----- ", dir(self.action))
-        # print("this is load_exr_in_viewer")
-        # self.model.get_exr_data()
-
-
-    # def load_jpg_in_viewer(self):
-    #     print("this is load_jpg_in_viewer")
-
-    # def load_mov_in_viewer(self):
-    #     print("this is load_mov_in_viewer")
-
-    # def compare_versions(self):
-    #     print("this is compare_versions")
-
-    # def remove_version(self):
-    #     print("this is remove_version")
-
-    # def remove_multi_versions(self):
-    #     print("this is remove_multi_versions")
-
     def open_file(self):
         msg = self.model.get_file_data()
         print(msg)
@@ -875,10 +621,7 @@ class Controller(QObject):
     def preferences_clicked(self):
         existing_prefs_data = self.model.get_current_preferences()
         print("existing_prefs_data -- ", existing_prefs_data)
-        self.prefs_window = self.view.open_pref_dialog(existing_prefs_data)
-
-        # self.view.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
-        # self.view.prefs_window.update_btn.clicked.connect(self.update_btn_clicked)    
+        self.prefs_window = self.view.open_pref_dialog(existing_prefs_data)   
         self.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
         self.prefs_window.update_btn.clicked.connect(self.update_btn_clicked) 
         self.prefs_window.close_btn.clicked.connect(self.prefs_window.close)
@@ -887,16 +630,9 @@ class Controller(QObject):
 class ThumbnilWidget(QWidget):
     contextMenuRequested = Signal(QPoint)
 
-    # def __init__(self, ver_path):
     def __init__(self, img_data_dict):
         super().__init__()
-        # self.exr_action = None
-
-        # self.fixed_width = 400
-        # self.setFixedWidth(self.fixed_width)
-
         self.set_style_sheet()   
-        # self.ver_path = ver_path
         self.img_data_dict = img_data_dict
 
         self.mainhlay = QHBoxLayout(self)
@@ -907,17 +643,9 @@ class ThumbnilWidget(QWidget):
         self.setLayout(self.mainhlay)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.customContextMenuRequested.connect(self.populate_menu_actions)
         self.customContextMenuRequested.connect(self.contextMenuRequested)
 
-
-        # self.context_menu_callback()
-
-        
-
-
     def populate_menu_actions(self, pos):
-        # print('pos --- ', pos)
         self.menu = QMenu(self)
         self.menu.setStyleSheet("""
             QMenu {
@@ -945,7 +673,6 @@ class ThumbnilWidget(QWidget):
 
         self.play_menu = self.menu.addMenu("Load in Viewer")
         self.exr_action = self.play_menu.addAction("exr")
-        # self.exr_action.triggered.connect(self.load_in_viewer)
 
         self.jpg_action = self.play_menu.addAction("jpg")
         self.mov_action = self.play_menu.addAction("mov")
@@ -954,23 +681,8 @@ class ThumbnilWidget(QWidget):
         self.remove_action = self.menu.addAction("Remove")
         self.compare_action = self.menu.addAction("Compare")
 
-        # self.remove_menu = self.menu.addMenu("Remove")
-        # self.rm_single_action = self.remove_menu.addAction("Single")
-        # self.rm_multi_action = self.remove_menu.addAction("Multiple")
-
-        # self.menu.exec_(self.mapToGlobal(pos))
-
-        # if self.selected:
-        #     print("self.selected --- ", self.selected.text())
-
-
-    # def context_menu_callback(self):
-    #     self.exr_action.triggered.connect(self.add_exr_in_player)
-
-
     def load_in_viewer(self):
         print("EXR clicked")
-
 
     def set_style_sheet(self):
         self.setStyleSheet("""
@@ -978,21 +690,8 @@ class ThumbnilWidget(QWidget):
                 background-color: #f5f5f5;
         """)
 
-
     def add_widgets(self):
-        # self.img_data_dict
-        # ******************************
-        # {'first_frame': 1004,
-        # 'image_full_path': 'E:\\demo_projects_02\\proj_01\\seq\\proj_01_00\\proj_01_00_10\\render\\v002\\pexels-alexquezada-33041453.jpg',
-        # 'last_frame': 1192,
-        # 'lbl_title': 'pexels-alexquezada-33041453',
-        # 'prj_code': 'proj_01',
-        # 'shot_code': 'proj_01_00_10'}
-        # ******************************
-
         hlay = QHBoxLayout()
-
-        # image_full_path = os.path.join(self.ver_path, os.listdir(self.ver_path)[0])
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
         scaled = pixmap.scaled(120, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -1007,33 +706,19 @@ class ThumbnilWidget(QWidget):
         lbl_thumbnil.setFixedWidth(50)
 
         hlay.addWidget(lbl_full_path)
-        hlay.addWidget(lbl_thumbnil)
-  
-        
+        hlay.addWidget(lbl_thumbnil)   
 
         vlay = QVBoxLayout()
         vlay.setContentsMargins(2,0,0,0)
-
-        # image_nm = os.listdir(self.ver_path)[0]
-        # lbl_title = QLabel(f"  {image_nm.split('.')[0]}  ")
 
         lbl_title = QLabel(f"  {self.img_data_dict['lbl_title']}  ")
         font = QFont()
         font.setPointSize(10)
         lbl_title.setFont(font)
 
-        # first_frame = random.randint(1001, 1009)
-        # last_frame = random.randint(1100, 1200)
         first_frame = self.img_data_dict['first_frame']
         last_frame = self.img_data_dict['last_frame']
-        # lbl_info = QLabel(
-        #     f"""  
-        #     Project - {self.ver_path.split(os.sep)[2]}
-        #     Shot - {self.ver_path.split(os.sep)[2]}
-        #     Frame range - {first_frame} - {last_frame}  
-        # """
-        # )
-        
+
         lbl_info = QLabel(
             f"""  
             Project - {self.img_data_dict['prj_code']}
@@ -1041,11 +726,6 @@ class ThumbnilWidget(QWidget):
             Frame range - {first_frame} - {last_frame}  
         """
         )
-
-
-        print("***"*10)
-        pprint(lbl_info.text())
-        print("***"*10)
 
         font.setPointSize(8)
         lbl_info.setFont(font)
@@ -1057,7 +737,6 @@ class ThumbnilWidget(QWidget):
 
         self.mainhlay.addLayout(hlay)
 
-    
     def enterEvent(self, event):
         self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
         super().enterEvent(event)
@@ -1085,7 +764,6 @@ class Model():
 
     # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
-        # json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
         try:
             with open(self.json_path, "r") as f:
                 data = json.load(f)
@@ -1110,47 +788,24 @@ class Model():
             it = it.parent()
  
         parts.reverse()
-
-        print("parts ---- ", parts)
-        
-        # self.thumbnil_dir_path = os.path.join(CURRENT_DRIVE, *parts)
         self.thumbnil_dir_path = os.path.join(drive + os.sep, *parts)
-        
-
-        print("self.thumbnil_dir_path --- ", self.thumbnil_dir_path)
-        # if PLATFORM == "lin":
-        #     # proj_code = self.thumbnil_dir_path.split(SPLIT_PATTERN)[6]
-            
-            
-        # elif PLATFORM == "win":
-        #     pass
-
-        # file_exts = self.get_project_extension(proj_code)
-        # print("file_exts --- ", file_exts)
-
         proj_code = parts[1]
 
         if len(parts) >= 2:
             ext_list = self.get_project_extension(proj_code)
-            print("file_exts ---- ", ext_list)
-            print("type --- ", type(ext_list))
             ext_tuple = tuple(ext_list)
         
-
             thumbnil_data_dict_lst = []
             thumb_dir_name = ''
             is_available_in_dir = False
 
             if os.path.isdir(self.thumbnil_dir_path):
                 thumb_dir_name = self.thumbnil_dir_path
-                print("thumb_dir_name ---- ", thumb_dir_name)
-                # print("project code --- ", thumb_dir_name.split(SPLIT_PATTERN)[2])
                     
                 if not is_available_in_dir:
                     is_available_in_dir = True                
 
                 for file_name in os.listdir(self.thumbnil_dir_path):
-                    # if file_name.lower().endswith((".jpg", ".jpeg")):
                     if file_name.lower().endswith(ext_tuple):
                         thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
                         thumbnil_data_dict_lst.append(thumbnil_data_dict)
@@ -1160,25 +815,15 @@ class Model():
 
             elif os.path.isfile(self.thumbnil_dir_path):
                 thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
-                print("thumb_dir_name === ", thumb_dir_name)
-                # file_name = self.thumbnil_dir_path.split("\\")[-1]
-                
-                # file_name = self.thumbnil_dir_path.split(SPLIT_PATTERN)[-1]
                 file_name = re.split(r"[\\/]", self.thumbnil_dir_path)[-1]
-                print("file_name ---- ", file_name)
-                # if file_name.lower().endswith((".jpg", ".jpeg")):
                 if file_name.lower().endswith(ext_tuple):
                     thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=False)
-                    print("thumbnil_data_dict --- ", thumbnil_data_dict)
                     thumbnil_data_dict_lst.append(thumbnil_data_dict)
 
             if thumbnil_data_dict_lst:
                 thumb_wid_lst = []
 
                 for img_data_dict in thumbnil_data_dict_lst:
-                    pprint(img_data_dict)
-                    print("***"*10)
-
                     self.thumbnil_widget = ThumbnilWidget(img_data_dict)
                     thumb_wid_lst.append(self.thumbnil_widget)
                         
@@ -1188,19 +833,15 @@ class Model():
             else:
                 if is_available_in_dir:
                     msg = "No images found in the directory." 
-                    print("empty thumb list")
                     return [], self.thumbnil_dir_path, msg
                 else:
                     msg = f"Invalid or unsupported image format - [{file_name.split('.')[-1]}]"
-                    return [], self.thumbnil_dir_path, msg
-            
-        else:
-            print("Please select a project or a post-prefix directory.")  
+                    return [], self.thumbnil_dir_path, msg        
+        else: 
             msg = "Please select a project or a post-prefix directory."
             return [], self.thumbnil_dir_path, msg
          
     def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
-        # if file_name.lower().endswith((".jpg", ".jpeg")):
         thumbnil_data_dict = {}
         
         if is_thumb_dir:
@@ -1212,11 +853,6 @@ class Model():
         thumbnil_data_dict['image_full_path'] = image_full_path
         thumbnil_data_dict['first_frame'] = random.randint(1001, 1009)
         thumbnil_data_dict['last_frame'] = random.randint(1100, 1200)
-
-        # thumbnil_data_dict['prj_code'] = image_full_path.split("\\")[2]
-        # thumbnil_data_dict['shot_code'] =image_full_path.split("\\")[5]
-        # thumbnil_data_dict['prj_code'] = image_full_path.split(SPLIT_PATTERN)[2]
-        # thumbnil_data_dict['shot_code'] = image_full_path.split(SPLIT_PATTERN)[5]
         
         thumbnil_data_dict['prj_code'] = re.split(r"[\\/]", image_full_path)[2]
         thumbnil_data_dict['shot_code'] =re.split(r"[\\/]", image_full_path)[5]
@@ -1251,8 +887,6 @@ class Model():
         return "Paste Operation"
 
     def get_current_preferences(self):
-        # json_path = os.path.join(os.path.expanduser('~'), "Documents", ".app", "config.json" )
-
         try:
             with open(self.json_path, "r") as f:
                 data = json.load(f)
@@ -1275,10 +909,7 @@ class Model():
 
 
 def create_json_file(app_dir_path):
-    # jsn_fle_pth = os.path.join(app_dir_path, 'config.json')
     jsn_fle_pth = os.path.join(app_dir_path, CONFIG_FILENAME)
-    # json_data = get_default_data()
-
     project = {}
     for num in range(1, 11):
         project[f"proj_{num:02}"] = {
@@ -1288,24 +919,14 @@ def create_json_file(app_dir_path):
 
     with open(jsn_fle_pth, "w") as json_file:
         json.dump(project, json_file, indent=4)
-    print(f"[{CONFIG_FILENAME}] created successfully! \n {jsn_fle_pth}")
 
 def setup_config():
-    # home_dir = os.path.expanduser('~')
-    # documents_path = os.path.join(home_dir, "Documents")    # TODO: find the env variable to get documents path in wind.
-    # documents_dir_lst = os.listdir(documents_path)
-    # app_dir_path = os.path.join(documents_path, ".app")
-
-    # app_dir_path = os.path.join(DOCUMENTS_DIRPATH, ".app")
     app_dir_path = Path(DOCUMENTS_DIRPATH) / "/app"
 
-    # if not ".app" in documents_dir_lst:       # TODO: check if folder/file exists (os.path.exits())
     if not os.path.exists(app_dir_path):
-        # os.makedirs(app_dir_path)
         app_dir_path.mkdir(exist_ok=True)
         create_json_file(app_dir_path)
 
-    # elif not "config.json" in os.listdir(app_dir_path):     # TODO: same as above
     elif not CONFIG_FILENAME in os.listdir(app_dir_path):
         create_json_file(app_dir_path)
  
@@ -1320,20 +941,3 @@ if __name__ == "__main__":
     view.show()
     sys.exit(app.exec_())
 
-
-
-
-
-# def update_json_file(documents_path):
-#     jsn_fle_pth = os.path.join(documents_path, ".app", 'config.json')
-
-#     with open(jsn_fle_pth, "r") as f:
-#         json_data = json.load(f)
-
-#     json_data["proj_1"]["extension"] = ["jpeg", "jpg"]
-#     json_data["proj_2"]["extension"] = ["jpeg", "jpg", "exr"]
-
-#     with open(jsn_fle_pth, "w") as f:
-#         json.dump(json_data, f, indent=4)
-
-#     print("JSON file updated successfully!")
