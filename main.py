@@ -38,7 +38,7 @@ from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
 import json
-import platform
+
 from platformdirs import user_documents_dir
 from pathlib import Path
 import re
@@ -46,10 +46,12 @@ import re
 
 
 DOCUMENTS_DIRPATH = user_documents_dir()
-CONFIG_FILENAME = "config.json"
-APP_DIRNAME = ".app"
-CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
 
+APP_DIRNAME = ".app"
+CONFIG_FILENAME = "config.json"
+
+# CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
+CONFIG_FILEPATH = Path(DOCUMENTS_DIRPATH) / APP_DIRNAME / CONFIG_FILENAME
 
 class PreferencesDialog(QDialog):
     def __init__(self, existing_prefs_data, parent=None, ):
