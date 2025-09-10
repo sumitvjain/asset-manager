@@ -49,15 +49,18 @@ DOCUMENTS_DIRPATH = user_documents_dir()
 
 APP_DIRNAME = ".app"
 CONFIG_FILENAME = "config.json"
-
-# CONFIG_FILEPATH = os.path.join(DOCUMENTS_DIRPATH, APP_DIRNAME, CONFIG_FILENAME )
+AVAILABLE_EXTENSIONS = ["exr", "jpeg", "jpg", "png", "mov"]
+DEFAULT_ENABLED_EXTS = {"jpeg", "jpg"}
 CONFIG_FILEPATH = Path(DOCUMENTS_DIRPATH) / APP_DIRNAME / CONFIG_FILENAME
+
+
 
 class PreferencesDialog(QDialog):
     def __init__(self, existing_prefs_data, parent=None, ):
         super().__init__(parent)
         self.existing_prefs_data = existing_prefs_data
-        self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
+        # self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
+        self.config_file_path = CONFIG_FILEPATH
         self.setWindowTitle("Application Preferences")
         icon_path = Path.cwd() / "icon" / "gear_cog_wheel.jpg"
         self.setWindowIcon(QIcon(str(icon_path)))
@@ -99,21 +102,39 @@ class PreferencesDialog(QDialog):
         btn_hlay.addWidget(self.update_btn)
         self.dialog_vlay.addLayout(btn_hlay)
 
-    def set_extension_lst(self, proj_ext_lst):
+    # def fetch_project_extensions(self, selected_proj):
+    #     with open(self.config_file_path, "r") as rd:
+    #         config_data = json.load(rd)
+
+    #     raw_ext_dict = config_data[selected_proj]['extension']
+    #     supported_ext_lst = []
+
+    #     for ext_key in raw_ext_dict.keys():
+    #         if raw_ext_dict[ext_key] == True:
+    #             supported_ext_lst.append(ext_key)
+
+    #     return supported_ext_lst
+
+    def set_extension_lst(self, supported_ext_lst):
         selected_proj = self.get_current_project_code()
         if selected_proj != '-- Select Project --':
             self.lst_wid.clear()
-            
-            for ext in self.ext_lst:
-                item = QListWidgetItem(ext)
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                if ext in proj_ext_lst:
-                    item.setCheckState(Qt.Checked)
-                else:
-                    item.setCheckState(Qt.Unchecked)
+            # supported_ext_lst = self.fetch_project_extensions(selected_proj)
 
-                self.lst_wid.addItem(item)
+            if supported_ext_lst:
+                # for ext in self.ext_lst:
+                # for ext in supported_ext_lst:
+                for ext in AVAILABLE_EXTENSIONS:
+                    item = QListWidgetItem(ext)
+                    item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                    # if ext in proj_ext_lst:
+                    if ext in supported_ext_lst:
+                        item.setCheckState(Qt.Checked)
+                    else:
+                        item.setCheckState(Qt.Unchecked)
 
+                    self.lst_wid.addItem(item)
+ 
         elif selected_proj == '-- Select Project --':
             self.lst_wid.clear()
 
@@ -481,7 +502,9 @@ class Controller(QObject):
 
     def proj_combo_index_changed(self):
         proj_code = self.prefs_window.get_current_project_code()
-        ext_list = self.model.get_project_extension(proj_code)
+        # ext_list = self.model.get_project_extension(proj_code)
+        ext_list = self.model.fetch_project_extensions(proj_code)
+        
         self.prefs_window.set_extension_lst(ext_list)
 
     def update_btn_clicked(self):
@@ -751,7 +774,7 @@ class ThumbnilWidget(QWidget):
 class Model():
     def __init__(self):
         self.thumbnil_widget = None
-        self.json_path = CONFIG_FILEPATH
+        # self.json_path = CONFIG_FILEPATH
 
     def get_invoked_action_path(self, invoked_action):
         child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
@@ -767,7 +790,7 @@ class Model():
     # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
         try:
-            with open(self.json_path, "r") as f:
+            with open(CONFIG_FILEPATH, "r") as f:
                 data = json.load(f)
 
             project = data.get(proj_code)
@@ -779,7 +802,21 @@ class Model():
         except Exception as e:
             print(f"Error reading JSON: {e}")
             return []
-    
+
+    def fetch_project_extensions(self, selected_proj):
+        with open(CONFIG_FILEPATH, "r") as rd:
+            config_data = json.load(rd)
+
+        raw_ext_dict = config_data[selected_proj]['extension']
+        supported_ext_lst = []
+
+        for ext_key in raw_ext_dict.keys():
+            if raw_ext_dict[ext_key] == True:
+                supported_ext_lst.append(ext_key)
+
+        return supported_ext_lst
+
+
     def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int, drive: str):
 
         parts = []
@@ -794,7 +831,8 @@ class Model():
         proj_code = parts[1]
 
         if len(parts) >= 2:
-            ext_list = self.get_project_extension(proj_code)
+            # ext_list = self.get_project_extension(proj_code)
+            ext_list = self.fetch_project_extensions(proj_code)
             ext_tuple = tuple(ext_list)
         
             thumbnil_data_dict_lst = []
@@ -890,7 +928,7 @@ class Model():
 
     def get_current_preferences(self):
         try:
-            with open(self.json_path, "r") as f:
+            with open(CONFIG_FILEPATH, "r") as f:
                 data = json.load(f)
                 print(f"Successful read JSON file")
                 return data
@@ -900,12 +938,18 @@ class Model():
             return []        
 
     def overwrite_config(self, new_extensions, selected_proj):
-        with open(self.json_path, 'r') as f:
+        with open(CONFIG_FILEPATH, 'r') as f:
             data = json.load(f)
 
-        data[selected_proj]["extension"] = new_extensions
+        # data[selected_proj]["extension"] = new_extensions
+        for ext_item in data[selected_proj]["extension"].keys():
+            if ext_item in new_extensions:
+                data[selected_proj]["extension"][ext_item] = True
+            else:
+                data[selected_proj]["extension"][ext_item] = False
 
-        with open(self.json_path, 'w') as f:
+
+        with open(CONFIG_FILEPATH, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Updated extensions for {selected_proj}: {new_extensions}")
 
@@ -913,24 +957,33 @@ class Model():
 def create_json_file(app_dir_path):
     jsn_fle_pth = os.path.join(app_dir_path, CONFIG_FILENAME)
     project = {}
-    for num in range(1, 11):
-        project[f"proj_{num:02}"] = {
-            "name": f"Project_{num:02}", 
-            "extension": ["jpeg"]
-            }
 
-    with open(jsn_fle_pth, "w") as json_file:
-        json.dump(project, json_file, indent=4)
+    for num in range(1, 11):
+        extension_dict = {ext: (ext in DEFAULT_ENABLED_EXTS) for ext in AVAILABLE_EXTENSIONS}
+
+        project[f"proj_{num:02}"] = {
+            "name" : f"Project_{num:02}",
+            "extension": extension_dict
+        }
+
+        with open(jsn_fle_pth, "w") as json_file:
+            json.dump(project, json_file, indent=4)
+    print("config file created ----------- ", jsn_fle_pth)
+        
+
 
 def setup_config():
-    app_dir_path = Path(DOCUMENTS_DIRPATH) / "/app"
+    # app_dir_path = Path(DOCUMENTS_DIRPATH) / "/app"
+    # print("app_dir_path --- ", app_dir_path)
+    config_dir_path = os.path.dirname(CONFIG_FILEPATH)
 
-    if not os.path.exists(app_dir_path):
-        app_dir_path.mkdir(exist_ok=True)
-        create_json_file(app_dir_path)
+    if not os.path.exists(config_dir_path):
+        # config_dir_path.mkdir(exist_ok=True)
+        os.makedirs(config_dir_path)
+        create_json_file(config_dir_path)
 
-    elif not CONFIG_FILENAME in os.listdir(app_dir_path):
-        create_json_file(app_dir_path)
+    elif not CONFIG_FILENAME in os.listdir(config_dir_path):
+        create_json_file(config_dir_path)
  
 
 
