@@ -33,7 +33,7 @@ from PySide2.QtWidgets import (
     QComboBox
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
-from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize
+from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
@@ -159,12 +159,31 @@ class PreferencesDialog(QDialog):
         return self.proj_combo.currentText()
 
 
-class TreeWidget(QTreeWidget):
-    
+class TreeWidgetWorker(QObject):
+    tree_view_bld_proc = Signal(str, QTreeWidgetItem)
+    finished_tree_bld_proc = Signal()
+
+    def __init__(self, path_item_pairs_lst):
+        super().__init__()
+        self.path_item_pairs_lst = path_item_pairs_lst
+
+
+    def run(self):
+        for tuple_itm in self.path_item_pairs_lst:
+            self.tree_view_bld_proc.emit(tuple_itm[0], tuple_itm[1])
+
+        self.finished_tree_bld_proc.emit()
+
+
+class TreeWidget(QTreeWidget):  
     itemPathClicked = Signal(str)
+    filesDropped = Signal(list)
+    
     def __init__(self):
         super().__init__()
         self.drive = None
+        self.thread_obj_lst = []
+        self.path_item_pairs = []
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
 
@@ -193,11 +212,16 @@ class TreeWidget(QTreeWidget):
                 if os.path.isdir(path):
                     if len(os.listdir(path)) > 0:
                         base_nm = os.path.basename(path)
-                        tree_item = QTreeWidgetItem([base_nm, "Folder"])    
+                        tree_item = QTreeWidgetItem([base_nm, "Folder"])   
 
+                        # ----------------------------------------------------------
+                        # This is working code without thread
                         self.addTopLevelItem(tree_item)
                         self.build_tree_view(path, tree_item)
-                        event.accept()                    
+                        event.accept()  
+                        # ----------------------------------------------------------   
+
+
                     else:
                         print("Directory check complete: no content found.")
                 else:
@@ -205,6 +229,7 @@ class TreeWidget(QTreeWidget):
                     event.ignore()
             else:
                 event.ignore()
+
 
     def enterEvent(self, event):
         """When mouse enters widget"""
@@ -250,6 +275,8 @@ class TreeWidget(QTreeWidget):
             elif os.path.isfile(full_path):
                 file_item = QTreeWidgetItem([item, "File"])
                 tree_item.addChild(file_item)
+
+
 
 
 class View(QMainWindow):
