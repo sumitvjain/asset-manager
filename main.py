@@ -176,12 +176,12 @@ class TreeWidgetWorker(QObject):
 
 
 class TreeWidget(QTreeWidget):  
-    itemPathClicked = Signal(str)
+    # itemPathClicked = Signal(str)
     filesDropped = Signal(list)
     
     def __init__(self):
         super().__init__()
-        self.drive = None
+        # self.drive = None
         self.thread_obj_lst = []
         self.path_item_pairs = []
         self.setHeaderHidden(True)
@@ -202,34 +202,44 @@ class TreeWidget(QTreeWidget):
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
-            self.clear()
+            self.filesDropped.emit(drop_urls)
+        else:
+            event.ignore()
 
-            for url in drop_urls:
-                path = url.toLocalFile() 
-                if self.drive == None:
-                    self.drive = re.split(r"[\\/]", path)[0]
+    # --------------------------------------------------------------------------------
+    # This is fully working code
+    # def dropEvent(self, event):
+    
+    #     if event.mimeData().hasUrls():
+    #         drop_urls = event.mimeData().urls()
+    #         self.clear()
 
-                if os.path.isdir(path):
-                    if len(os.listdir(path)) > 0:
-                        base_nm = os.path.basename(path)
-                        tree_item = QTreeWidgetItem([base_nm, "Folder"])   
+    #         for url in drop_urls:
+    #             path = url.toLocalFile() 
+    #             if self.drive == None:
+    #                 self.drive = re.split(r"[\\/]", path)[0]
 
-                        # ----------------------------------------------------------
-                        # This is working code without thread
-                        self.addTopLevelItem(tree_item)
-                        self.build_tree_view(path, tree_item)
-                        event.accept()  
-                        # ----------------------------------------------------------   
+    #             if os.path.isdir(path):
+    #                 if len(os.listdir(path)) > 0:
+    #                     base_nm = os.path.basename(path)
+    #                     tree_item = QTreeWidgetItem([base_nm, "Folder"])   
+
+    #                     # ----------------------------------------------------------
+    #                     # This is working code without thread
+    #                     self.addTopLevelItem(tree_item)
+    #                     self.build_tree_view(path, tree_item)
+    #                     event.accept()  
+    #                     # ----------------------------------------------------------   
 
 
-                    else:
-                        print("Directory check complete: no content found.")
-                else:
-                    print("This is not directory path")
-                    event.ignore()
-            else:
-                event.ignore()
-
+    #                 else:
+    #                     print("Directory check complete: no content found.")
+    #             else:
+    #                 print("This is not directory path")
+    #                 event.ignore()
+    #         else:
+    #             event.ignore()
+    #  ---------------------------------------------------------------------------------
 
     def enterEvent(self, event):
         """When mouse enters widget"""
@@ -275,8 +285,6 @@ class TreeWidget(QTreeWidget):
             elif os.path.isfile(full_path):
                 file_item = QTreeWidgetItem([item, "File"])
                 tree_item.addChild(file_item)
-
-
 
 
 class View(QMainWindow):
@@ -526,6 +534,7 @@ class Controller(QObject):
         self.view.preferences_action.triggered.connect(self.preferences_clicked)
 
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
+        self.view.tree_wid.filesDropped.connect(self.on_files_dropped)
 
     def proj_combo_index_changed(self):
         proj_code = self.prefs_window.get_current_project_code()
@@ -556,6 +565,10 @@ class Controller(QObject):
             self.view.clear_lst_wid()
             self.view.set_lbl_thumbnil_path(thumb_dir_name)
             self.view.show_notification(msg)
+
+    def on_files_dropped(self, drop_urls):
+        urls_data = self.model.get_urls_data(drop_urls)
+
 
     def handle_context_menu(self, widget, pos):        
         widget.populate_menu_actions(pos)
@@ -801,6 +814,7 @@ class ThumbnilWidget(QWidget):
 class Model():
     def __init__(self):
         self.thumbnil_widget = None
+        self.drive = None
         # self.json_path = CONFIG_FILEPATH
 
     def get_invoked_action_path(self, invoked_action):
@@ -813,6 +827,65 @@ class Model():
                         return True, path
         else:
             return False, None
+
+    def fetch_directory_data(self, path):
+        """
+        Recursively fetch all directory and file structure from the given path.
+        Returns a nested dictionary for easy reading.
+        """
+        tree = {"name": os.path.basename(path), "type": "directory", "children": []}
+
+        try:
+            for entry in os.listdir(path):
+                full_path = os.path.join(path, entry)
+
+                if os.path.isdir(full_path):
+                    # Recursively fetch subdirectory
+                    tree["children"].append(self.fetch_directory_data(full_path))
+                else:
+                    # Store file info
+                    tree["children"].append({"name": entry, "type": "file"})
+        except PermissionError:
+            tree["children"].append({"name": "Permission Denied", "type": "error"})
+
+        return tree
+
+    def get_urls_data(self, drop_urls):
+
+        for url in drop_urls:
+            url_path = url.toLocalFile() 
+            print("path --- ", url_path)
+            if self.drive == None:
+                self.drive = re.split(r"[\\/]", url_path)[0]
+
+
+            if os.path.isdir(url_path):
+                if len(os.listdir(url_path)) > 0:
+
+                    tree_data = self.fetch_directory_data(url_path)
+                    print("****"*10)
+                    pprint(tree_data)
+                    print("****"*10)
+
+            #         base_nm = os.path.basename(url_path)
+
+
+
+            #         tree_item = QTreeWidgetItem([base_nm, "Folder"])   
+
+            #         # ----------------------------------------------------------
+            #         # This is working code without thread
+            #         self.addTopLevelItem(tree_item)
+            #         self.build_tree_view(path, tree_item)
+            #         # event.accept()  
+            #         # ----------------------------------------------------------   
+
+                else:
+                    print("Directory check complete: no content found.")
+            else:
+                print("This is not directory path")
+                # event.ignore()
+
 
     # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
