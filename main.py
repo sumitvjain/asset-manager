@@ -160,8 +160,9 @@ class PreferencesDialog(QDialog):
 
 
 class TreeWidgetWorker(QObject):
-    tree_wid_itm_proc = Signal(QTreeWidgetItem)
-    tree_bld_proc = Signal(str, QTreeWidgetItem)
+    # tree_wid_itm_proc = Signal(QTreeWidgetItem)
+    # tree_bld_proc = Signal(str, QTreeWidgetItem)
+    tree_data_ready = Signal(str, dict)
     finished = Signal()
     print("111")
 
@@ -177,9 +178,11 @@ class TreeWidgetWorker(QObject):
             path = dict_itm[base_nm]["path"]
             print("base_nm --- ", base_nm)
             print("path ---- ", path)
-            tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
-            self.tree_wid_itm_proc.emit(tree_item)
-            self.tree_bld_proc.emit(path, tree_item)
+            # tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
+            # self.tree_wid_itm_proc.emit(tree_item)
+            # self.tree_bld_proc.emit(path, tree_item)
+
+            self.tree_data_ready.emit(base_nm, dict_itm[base_nm])
 
         self.finished.emit()
 
@@ -281,8 +284,8 @@ class TreeWidget(QTreeWidget):
         """)
         super().leaveEvent(event)
 
-    def tree_wid_itm_processed(self, tree_item):
-        self.addTopLevelItem(tree_item)
+    # def tree_wid_itm_processed(self, tree_item):
+    #     self.addTopLevelItem(tree_item)
 
     def build_tree_view(self, path, tree_item):     
         dir_contents = os.listdir(path)
@@ -300,41 +303,51 @@ class TreeWidget(QTreeWidget):
                 tree_item.addChild(file_item)
 
 
+    def process_tree_data(self, base_nm, data):
+        path = data["path"]
+        tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
+        self.addTopLevelItem(tree_item)
+        self.build_tree_view(path, tree_item)
+
+
+
     def load_folder_tree_into_ui(self, folder_tree_data_lst):
         # ---------------------------------------------------------------------
         # This code with qthread
 
-        # self.clear()
-        # self.thread_obj = QThread()
+        self.clear()
+        self.thread_obj = QThread()
 
-        # self.tree_worker = TreeWidgetWorker(folder_tree_data_lst)
-        # self.tree_worker.moveToThread(self.thread_obj)
+        self.tree_worker = TreeWidgetWorker(folder_tree_data_lst)
+        self.tree_worker.moveToThread(self.thread_obj)
 
-        # self.thread_obj.started.connect(self.tree_worker.run)
+        self.thread_obj.started.connect(self.tree_worker.run)
 
         # self.tree_worker.tree_wid_itm_proc.connect(self.tree_wid_itm_processed)
         # self.tree_worker.tree_bld_proc.connect(self.build_tree_view)
-        # self.tree_worker.finished.connect(self.thread_obj.quit)
-        # self.tree_worker.finished.connect(self.tree_worker.deleteLater)
 
-        # self.thread_obj.finished.connect(self.thread_obj.deleteLater)
+        self.tree_worker.tree_data_ready.connect(self.process_tree_data)
 
-        # self.thread_obj.start()
+        self.tree_worker.finished.connect(self.thread_obj.quit)
+        self.tree_worker.finished.connect(self.tree_worker.deleteLater)
+
+        self.thread_obj.finished.connect(self.thread_obj.deleteLater)
+        self.thread_obj.start()
         # ---------------------------------------------------------------------
 
 
         # ********************************************************************
         # This code for without qthread
 
-        self.clear()
-        for dict_itm in folder_tree_data_lst:
-            base_nm = list(dict_itm.keys())[0]
-            path = dict_itm[base_nm]["path"]
-            print("base_nm --- ", base_nm)
-            print("path ---- ", path)
-            tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
-            self.addTopLevelItem(tree_item)
-            self.build_tree_view(path, tree_item)
+        # self.clear()
+        # for dict_itm in folder_tree_data_lst:
+        #     base_nm = list(dict_itm.keys())[0]
+        #     path = dict_itm[base_nm]["path"]
+        #     print("base_nm --- ", base_nm)
+        #     print("path ---- ", path)
+        #     tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
+        #     self.addTopLevelItem(tree_item)
+        #     self.build_tree_view(path, tree_item)
         # ********************************************************************
 
 
