@@ -121,19 +121,19 @@ class PreferencesDialog(QDialog):
             self.lst_wid.clear()
             # supported_ext_lst = self.fetch_project_extensions(selected_proj)
 
-            if supported_ext_lst:
-                # for ext in self.ext_lst:
-                # for ext in supported_ext_lst:
-                for ext in AVAILABLE_EXTENSIONS:
-                    item = QListWidgetItem(ext)
-                    item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                    # if ext in proj_ext_lst:
-                    if ext in supported_ext_lst:
-                        item.setCheckState(Qt.Checked)
-                    else:
-                        item.setCheckState(Qt.Unchecked)
+            # if supported_ext_lst:
 
-                    self.lst_wid.addItem(item)
+            print("AVAILABLE_EXTENSIONS ---- ", AVAILABLE_EXTENSIONS)
+            for ext in AVAILABLE_EXTENSIONS:
+                item = QListWidgetItem(ext)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                # if ext in proj_ext_lst:
+                if ext in supported_ext_lst:
+                    item.setCheckState(Qt.Checked)
+                else:
+                    item.setCheckState(Qt.Unchecked)
+
+                self.lst_wid.addItem(item)
  
         elif selected_proj == '-- Select Project --':
             self.lst_wid.clear()
@@ -160,19 +160,28 @@ class PreferencesDialog(QDialog):
 
 
 class TreeWidgetWorker(QObject):
-    tree_view_bld_proc = Signal(str, QTreeWidgetItem)
-    finished_tree_bld_proc = Signal()
+    tree_wid_itm_proc = Signal(QTreeWidgetItem)
+    tree_bld_proc = Signal(str, QTreeWidgetItem)
+    finished = Signal()
+    print("111")
 
-    def __init__(self, path_item_pairs_lst):
+    def __init__(self, folder_tree_data_lst):
         super().__init__()
-        self.path_item_pairs_lst = path_item_pairs_lst
-
+        self.folder_tree_data_lst = folder_tree_data_lst
+        print("222")
 
     def run(self):
-        for tuple_itm in self.path_item_pairs_lst:
-            self.tree_view_bld_proc.emit(tuple_itm[0], tuple_itm[1])
+        print("444")
+        for dict_itm in self.folder_tree_data_lst:
+            base_nm = list(dict_itm.keys())[0]
+            path = dict_itm[base_nm]["path"]
+            print("base_nm --- ", base_nm)
+            print("path ---- ", path)
+            tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
+            self.tree_wid_itm_proc.emit(tree_item)
+            self.tree_bld_proc.emit(path, tree_item)
 
-        self.finished_tree_bld_proc.emit()
+        self.finished.emit()
 
 
 class TreeWidget(QTreeWidget):  
@@ -203,6 +212,7 @@ class TreeWidget(QTreeWidget):
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
             self.filesDropped.emit(drop_urls)
+            # event.accept() 
         else:
             event.ignore()
 
@@ -271,7 +281,10 @@ class TreeWidget(QTreeWidget):
         """)
         super().leaveEvent(event)
 
-    def build_tree_view(self, path, tree_item):
+    def tree_wid_itm_processed(self, tree_item):
+        self.addTopLevelItem(tree_item)
+
+    def build_tree_view(self, path, tree_item):     
         dir_contents = os.listdir(path)
 
         for item in sorted(dir_contents):
@@ -285,6 +298,44 @@ class TreeWidget(QTreeWidget):
             elif os.path.isfile(full_path):
                 file_item = QTreeWidgetItem([item, "File"])
                 tree_item.addChild(file_item)
+
+
+    def load_folder_tree_into_ui(self, folder_tree_data_lst):
+        # ---------------------------------------------------------------------
+        # This code with qthread
+
+        # self.clear()
+        # self.thread_obj = QThread()
+
+        # self.tree_worker = TreeWidgetWorker(folder_tree_data_lst)
+        # self.tree_worker.moveToThread(self.thread_obj)
+
+        # self.thread_obj.started.connect(self.tree_worker.run)
+
+        # self.tree_worker.tree_wid_itm_proc.connect(self.tree_wid_itm_processed)
+        # self.tree_worker.tree_bld_proc.connect(self.build_tree_view)
+        # self.tree_worker.finished.connect(self.thread_obj.quit)
+        # self.tree_worker.finished.connect(self.tree_worker.deleteLater)
+
+        # self.thread_obj.finished.connect(self.thread_obj.deleteLater)
+
+        # self.thread_obj.start()
+        # ---------------------------------------------------------------------
+
+
+        # ********************************************************************
+        # This code for without qthread
+
+        self.clear()
+        for dict_itm in folder_tree_data_lst:
+            base_nm = list(dict_itm.keys())[0]
+            path = dict_itm[base_nm]["path"]
+            print("base_nm --- ", base_nm)
+            print("path ---- ", path)
+            tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
+            self.addTopLevelItem(tree_item)
+            self.build_tree_view(path, tree_item)
+        # ********************************************************************
 
 
 class View(QMainWindow):
@@ -457,7 +508,6 @@ class View(QMainWindow):
         font.setFamilies("Arial")
         self.lbl_thumb_path.setFont(font)
 
-
     def add_viewer_wid(self):
         self.viewer_wid = QWidget()
         right_vlay = QVBoxLayout(self.viewer_wid)
@@ -478,7 +528,6 @@ class View(QMainWindow):
             tab_view_vlay_1.addWidget(self.tab_view_lbl)
         tab_view_wid.setLayout(tab_view_vlay_1)
         return tab_view_wid
-
 
     def load_render_in_viewer(self, path):
         current_tab = self.tab_wid.currentWidget()
@@ -508,6 +557,9 @@ class View(QMainWindow):
 
     def remove_selected(self, widget):
         self.lst_wid.takeItem(widget)
+
+    # def load_folder_tree_into_ui(self, folder_tree_data_lst):
+    #     print("len --- ", len(folder_tree_data_lst))
 
 
 class Controller(QObject):
@@ -540,6 +592,7 @@ class Controller(QObject):
         proj_code = self.prefs_window.get_current_project_code()
         # ext_list = self.model.get_project_extension(proj_code)
         ext_list = self.model.fetch_project_extensions(proj_code)
+        print("ext_list ---- ", ext_list)
         
         self.prefs_window.set_extension_lst(ext_list)
 
@@ -550,8 +603,7 @@ class Controller(QObject):
         self.model.overwrite_config(new_extensions, selected_proj)
 
     def on_item_clicked(self, item, column):
-        drive = self.view.tree_wid.drive
-        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column, drive)
+        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
 
         if thumbnil_wid_items_lst:
             self.view.clear_lst_wid()
@@ -567,7 +619,8 @@ class Controller(QObject):
             self.view.show_notification(msg)
 
     def on_files_dropped(self, drop_urls):
-        urls_data = self.model.get_urls_data(drop_urls)
+        folder_tree_data_lst = self.model.get_urls_data(drop_urls)
+        self.view.tree_wid.load_folder_tree_into_ui(folder_tree_data_lst)
 
 
     def handle_context_menu(self, widget, pos):        
@@ -828,50 +881,49 @@ class Model():
         else:
             return False, None
 
-    def fetch_directory_data(self, path):
-        """
-        Recursively fetch all directory and file structure from the given path.
-        Returns a nested dictionary for easy reading.
-        """
-        tree = {"name": os.path.basename(path), "type": "directory", "children": []}
+    def fetch_folder_tree_data(self, path):
 
-        try:
-            for entry in os.listdir(path):
+        folder_tree_data = {
+            "dir_name" : os.path.basename(path),
+            "path" : path
+            }
+
+        if os.path.isdir(path):
+            files = []
+            folders = []
+
+            for entry in sorted(os.listdir(path)):
                 full_path = os.path.join(path, entry)
-
                 if os.path.isdir(full_path):
-                    # Recursively fetch subdirectory
-                    tree["children"].append(self.fetch_directory_data(full_path))
+                    folders.append(self.fetch_folder_tree_data(full_path))
                 else:
-                    # Store file info
-                    tree["children"].append({"name": entry, "type": "file"})
-        except PermissionError:
-            tree["children"].append({"name": "Permission Denied", "type": "error"})
+                    files.append(full_path.replace("\\", "/"))
 
-        return tree
+            if files:
+                folder_tree_data["files"] = files
+            if folders:
+                folder_tree_data["sub_dir"] = folders
+
+        return folder_tree_data
 
     def get_urls_data(self, drop_urls):
 
+        folder_tree_data_lst = []
         for url in drop_urls:
             url_path = url.toLocalFile() 
             print("path --- ", url_path)
             if self.drive == None:
                 self.drive = re.split(r"[\\/]", url_path)[0]
+                print("self.drive 0000 ", self.drive)
 
+            tree_name = re.split(r"[\\/]", url_path)[-1]
 
             if os.path.isdir(url_path):
                 if len(os.listdir(url_path)) > 0:
 
-                    tree_data = self.fetch_directory_data(url_path)
-                    print("****"*10)
-                    pprint(tree_data)
-                    print("****"*10)
-
-            #         base_nm = os.path.basename(url_path)
-
-
-
-            #         tree_item = QTreeWidgetItem([base_nm, "Folder"])   
+                    folder_tree_data_dict = self.fetch_folder_tree_data(url_path)
+                    folder_tree_data_lst.append({tree_name:folder_tree_data_dict})
+   
 
             #         # ----------------------------------------------------------
             #         # This is working code without thread
@@ -886,6 +938,16 @@ class Model():
                 print("This is not directory path")
                 # event.ignore()
 
+        
+        folder_structure_dir = r"E:\temp\folder_structure\folder_structure_data.json"
+
+        with open(folder_structure_dir, "w", encoding="utf-8") as f:
+            json.dump(folder_tree_data_lst, f, indent=4)
+
+        print("Folder structure saved to folder_structure.json")
+
+
+        return folder_tree_data_lst
 
     # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
@@ -907,6 +969,7 @@ class Model():
         with open(CONFIG_FILEPATH, "r") as rd:
             config_data = json.load(rd)
 
+        print("selected_proj --- ", selected_proj)
         raw_ext_dict = config_data[selected_proj]['extension']
         supported_ext_lst = []
 
@@ -917,7 +980,7 @@ class Model():
         return supported_ext_lst
 
 
-    def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int, drive: str):
+    def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int):
 
         parts = []
         it = item
@@ -927,11 +990,10 @@ class Model():
             it = it.parent()
  
         parts.reverse()
-        self.thumbnil_dir_path = os.path.join(drive + os.sep, *parts)
+        self.thumbnil_dir_path = os.path.join(self.drive + os.sep, *parts)
         proj_code = parts[1]
 
         if len(parts) >= 2:
-            # ext_list = self.get_project_extension(proj_code)
             ext_list = self.fetch_project_extensions(proj_code)
             ext_tuple = tuple(ext_list)
         
@@ -946,13 +1008,11 @@ class Model():
                     is_available_in_dir = True                
 
                 for file_name in os.listdir(self.thumbnil_dir_path):
+                    print("file_name --- ", file_name)
                     if file_name.lower().endswith(ext_tuple):
                         thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
                         thumbnil_data_dict_lst.append(thumbnil_data_dict)
                         
-
-
-
             elif os.path.isfile(self.thumbnil_dir_path):
                 thumb_dir_name = os.path.dirname(self.thumbnil_dir_path)
                 file_name = re.split(r"[\\/]", self.thumbnil_dir_path)[-1]
@@ -1071,7 +1131,6 @@ def create_json_file(app_dir_path):
     print("config file created ----------- ", jsn_fle_pth)
         
 
-
 def setup_config():
     # app_dir_path = Path(DOCUMENTS_DIRPATH) / "/app"
     # print("app_dir_path --- ", app_dir_path)
@@ -1085,7 +1144,6 @@ def setup_config():
     elif not CONFIG_FILENAME in os.listdir(config_dir_path):
         create_json_file(config_dir_path)
  
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
