@@ -33,7 +33,7 @@ from PySide2.QtWidgets import (
     QComboBox
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
-from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool
+from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool, QRunnable
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 import sys, os
 import random
@@ -575,6 +575,35 @@ class View(QMainWindow):
     #     print("len --- ", len(folder_tree_data_lst))
 
 
+class TreeItemClickSignals(QObject):
+    custom_context = Signal(list)
+    completed = Signal()
+
+class TreeItemClickWorkerPool(QRunnable):
+    def __init__(self, thumbnil_wid_items_lst, thumb_dir_name, msg):
+        super().__init__()
+        self.thumbnil_wid_items_lst = thumbnil_wid_items_lst
+        self.thumb_dir_name = thumb_dir_name
+        self.msg = msg
+
+        self.signal_obj = TreeItemClickSignals()
+
+    def run(self):
+        if self.thumbnil_wid_items_lst:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
+            self.view.add_thumbnil_wid(self.thumbnil_wid_items_lst)
+
+            self.signal_obj.custom_context.emit(self.thumbnil_wid_items_lst)
+
+        else:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
+            self.view.show_notification(self.msg)
+
+        self.signal_obj.completed.emit()
+
+
 class Controller(QObject):
     def __init__(self, model, view):
         super().__init__()
@@ -616,20 +645,43 @@ class Controller(QObject):
         self.model.overwrite_config(new_extensions, selected_proj)
 
     def on_item_clicked(self, item, column):
+        # This code is without threadpool
+        # thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
+
+        # if thumbnil_wid_items_lst:
+        #     self.view.clear_lst_wid()
+        #     self.view.set_lbl_thumbnil_path(thumb_dir_name)
+        #     self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
+
+        #     for w in thumbnil_wid_items_lst:
+        #         w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+
+        # else:
+        #     self.view.clear_lst_wid()
+        #     self.view.set_lbl_thumbnil_path(thumb_dir_name)
+        #     self.view.show_notification(msg)
+
+        # ---------------------------------------------------------------------------------------------
+       
+        # This is with threadpool
+
         thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
+        thread_pool = QThreadPool.globalInstance()
 
-        if thumbnil_wid_items_lst:
-            self.view.clear_lst_wid()
-            self.view.set_lbl_thumbnil_path(thumb_dir_name)
-            self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
+        tree_item_click_worker_pool = TreeItemClickWorkerPool(thumbnil_wid_items_lst, thumb_dir_name, msg)
 
-            for w in thumbnil_wid_items_lst:
-                w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+        tree_item_click_worker_pool.signal_obj.custom_context.connect(self.thumbnail_contextc_action)
+        tree_item_click_worker_pool.signal_obj.completed.connect(self.on_task_completed)
 
-        else:
-            self.view.clear_lst_wid()
-            self.view.set_lbl_thumbnil_path(thumb_dir_name)
-            self.view.show_notification(msg)
+        thread_pool.start(tree_item_click_worker_pool)
+
+
+    def on_task_completed(self):
+        print("*** Thumbnil task completed ***")
+
+    def thumbnail_contextc_action(self, thumbnil_wid_items_lst):
+        for w in thumbnil_wid_items_lst:
+            w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
 
     def on_files_dropped(self, drop_urls):
         folder_tree_data_lst = self.model.get_urls_data(drop_urls)
@@ -645,7 +697,9 @@ class Controller(QObject):
 
     def action_clicked(self, invoked_action, pos):
 
-        if invoked_action.text() in ["exr", 'jpg', 'mov', 'png']:
+        print("invoked_action --- ", invoked_action.text())
+        # if invoked_action.text() in ["exr", 'jpg', 'mov', 'png']:
+        if invoked_action.text() == "Load in Viewer":
             result, path = self.model.get_invoked_action_path(invoked_action)
             if result:
                 self.view.load_render_in_viewer(path)
@@ -802,12 +856,13 @@ class ThumbnilWidget(QWidget):
             }
         """)
 
-        self.play_menu = self.menu.addMenu("Load in Viewer")
-        self.exr_action = self.play_menu.addAction("exr")
+        # self.play_menu = self.menu.addMenu("Load in Viewer")
+        # self.exr_action = self.play_menu.addAction("exr")
 
-        self.jpg_action = self.play_menu.addAction("jpg")
-        self.mov_action = self.play_menu.addAction("mov")
+        # self.jpg_action = self.play_menu.addAction("jpg")
+        # self.mov_action = self.play_menu.addAction("mov")
 
+        self.laod_action = self.menu.addAction("Load in Viewer")
 
         self.remove_action = self.menu.addAction("Remove")
         self.compare_action = self.menu.addAction("Compare")
@@ -825,7 +880,8 @@ class ThumbnilWidget(QWidget):
         hlay = QHBoxLayout()
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
-        scaled = pixmap.scaled(120, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        # scaled = pixmap.scaled(120, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        scaled = pixmap.scaled(120, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         lbl_full_path = QLabel()
         lbl_full_path.setText(f"Path-{image_full_path}")
@@ -884,15 +940,28 @@ class Model():
         # self.json_path = CONFIG_FILEPATH
 
     def get_invoked_action_path(self, invoked_action):
-        child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
-        if invoked_action.text() == "exr":
-            for child in child_widgets:
-                if isinstance(child, QLabel):
-                    if child.text().startswith("Path"):
-                        path = child.text().split("Path-")[-1]
-                        return True, path
-        else:
-            return False, None
+        # child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
+        
+        # if invoked_action.text() == "exr":
+        #     for child in child_widgets:
+        #         if isinstance(child, QLabel):
+        #             if child.text().startswith("Path"):
+        #                 path = child.text().split("Path-")[-1]
+        #                 return True, path
+        # else:
+        #     return False, None
+
+        # ---------------------------------------------------------------------------------------------------------
+
+        child_widgets = invoked_action.parentWidget().parentWidget().findChildren(QWidget)
+        
+
+        for child in child_widgets:
+            if isinstance(child, QLabel):
+                if child.text().startswith("Path"):
+                    path = child.text().split("Path-")[-1]
+                    return True, path
+
 
     def fetch_folder_tree_data(self, path):
 
