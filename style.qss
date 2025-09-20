@@ -1,0 +1,212 @@
+/* style.qss — Standard Qt stylesheet for PySide2 */
+
+/* ---------- Base window ---------- */
+QMainWindow, QWidget {
+    background-color: #404040;
+    color: #000000;
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 11pt;
+}
+
+/* ---------- Header / Labels ---------- */
+
+QLabel {
+    color: #666666;	
+    padding: 2px 4px;
+}
+
+/* Accent color used across UI */
+:root {
+    --accent: #5a87f7; /* blue */
+    --accent-2: #20B2AA; /* teal */
+    --muted: #9aa7c7;
+}
+
+/* ---------- QPushButton ---------- */
+QPushButton {
+    background-color: transparent;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #e6e6e6;
+    min-height: 26px;
+}
+
+QPushButton:hover {
+    border-color: #5a87f7;
+    background-color: rgba(90,135,247,0.08);
+}
+
+QPushButton:pressed {
+    background-color: rgba(90,135,247,0.16);
+}
+
+QPushButton:disabled {
+    color: #777;
+    border-color: #333;
+}
+
+/* Primary / emphasized button */
+QPushButton.primary {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6fa1ff, stop:1 #3f73ff);
+    border: none;
+    color: white;
+}
+
+QPushButton.primary:hover { opacity: 0.95; }
+
+/* ---------- QToolButton (icon buttons) ---------- */
+QToolButton {
+    background: transparent;
+    border: none;
+    padding: 4px;
+}
+QToolButton:hover { background: rgba(255,255,255,0.03); border-radius: 4px; }
+
+/* ---------- QTabWidget / QTabBar ---------- */
+QTabWidget::pane {
+    border-top: 1px solid #444;
+    background: #333;
+}
+
+QTabBar::tab {
+    background: #3c3c3c;
+    color: #ddd;
+    padding: 6px 12px;
+    margin-right: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+QTabBar::tab:selected {
+    background: #5a5a5a;
+    color: white;
+}
+
+/* ---------- QTreeWidget / QListWidget ---------- */
+QTreeWidget, QListWidget {
+    background-color: #333;
+    border: 1px solid #444;
+    alternate-background-color: #2f2f2f;
+    outline: none;
+}
+
+QTreeWidget::item, QListWidget::item {
+    padding: 6px 8px;
+}
+
+QTreeWidget::item:hover, QListWidget::item:hover {
+    background-color: rgba(90,135,247,0.06);
+}
+
+QTreeWidget::item:selected, QListWidget::item:selected {
+    background-color: #5a87f7;
+    color: white;
+}
+
+/* ---------- QLineEdit / QTextEdit / QPlainTextEdit ---------- */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #252525;
+    border: 1px solid #444;
+    padding: 6px;
+    border-radius: 6px;
+    color: #e6e6e6;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border-color: #5a87f7;
+}
+
+/* ---------- QComboBox ---------- */
+QComboBox {
+    background-color: #252525;
+    border: 1px solid #444;
+    padding: 4px;
+    border-radius: 6px;
+    color: #e6e6e6;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #444;
+}
+
+/* ---------- QScrollBar (vertical & horizontal) ---------- */
+QScrollBar:vertical, QScrollBar:horizontal {
+    background: transparent;
+    width: 10px;
+    height: 10px;
+}
+
+QScrollBar::handle {
+    background: #444;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:hover {
+    background: #5a5a5a;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    background: none;
+    height: 0;
+}
+
+/* ---------- QMenuBar / QMenu ---------- */
+QMenuBar {
+    background: #2b2b2b;
+    color: #e6e6e6;
+}
+
+QMenu {
+    background-color: #333;
+    border: 1px solid #444;
+    padding: 4px;
+}
+
+QMenu::item {
+    padding: 6px 20px;
+}
+
+QMenu::item:selected {
+    background-color: rgba(90,135,247,0.12);
+    color: white;
+}
+
+/* ---------- QProgressBar ---------- */
+QProgressBar {
+    background-color: #2f2f2f;
+    border: 1px solid #3f3f3f;
+    border-radius: 6px;
+    text-align: center;
+    color: #ddd;
+    padding: 2px;
+    min-height: 18px;
+}
+
+QProgressBar::chunk {
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #66c2ff, stop:1 #3f73ff);
+    border-radius: 6px;
+}
+
+/* ---------- QDialog (modal windows) ---------- */
+QDialog {
+    background-color: #313131;
+    border: 1px solid #454545;
+}
+
+/* ---------- Hover/focus helpers ---------- */
+*:hover {
+    /* subtle global hover (apply with care) */
+}
+
+/* ---------- Utility small styles (badges, small labels) ---------- */
+.smallLabel {
+    color: #9aa7c7;
+    font-size: 9pt;
+}
+
+/* ---------- End of file ---------- */

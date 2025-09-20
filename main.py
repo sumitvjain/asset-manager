@@ -52,6 +52,7 @@ CONFIG_FILENAME = "config.json"
 AVAILABLE_EXTENSIONS = ["exr", "jpeg", "jpg", "png", "mov"]
 DEFAULT_ENABLED_EXTS = {"jpeg", "jpg"}
 CONFIG_FILEPATH = Path(DOCUMENTS_DIRPATH) / APP_DIRNAME / CONFIG_FILENAME
+STYLE_QSSPATH =   Path(os.path.dirname(__file__)) / "style.qss" 
 
 
 
@@ -164,15 +165,12 @@ class TreeWidgetWorker(QObject):
     # tree_bld_proc = Signal(str, QTreeWidgetItem)
     tree_data_ready = Signal(str, dict)
     finished = Signal()
-    print("111")
 
     def __init__(self, folder_tree_data_lst):
         super().__init__()
         self.folder_tree_data_lst = folder_tree_data_lst
-        print("222")
 
     def run(self):
-        print("444")
         for dict_itm in self.folder_tree_data_lst:
             base_nm = list(dict_itm.keys())[0]
             path = dict_itm[base_nm]["path"]
@@ -254,35 +252,35 @@ class TreeWidget(QTreeWidget):
     #             event.ignore()
     #  ---------------------------------------------------------------------------------
 
-    def enterEvent(self, event):
-        """When mouse enters widget"""
-        self.setStyleSheet("""
-            QTreeWidget::item {
-                background-color: #F0F8FF;
+    # def enterEvent(self, event):
+    #     """When mouse enters widget"""
+    #     self.setStyleSheet("""
+    #         QTreeWidget::item {
+    #             background-color: #F0F8FF;
 
-            }
-            QTreeWidget::item:hover {
-                background-color: #B0C4DE;
-            }
-            QTreeWidget::item:selected {
-                background-color: #20B2AA;
-                color: black;
-            }
-        """)
-        super().enterEvent(event)
+    #         }
+    #         QTreeWidget::item:hover {
+    #             background-color: #B0C4DE;
+    #         }
+    #         QTreeWidget::item:selected {
+    #             background-color: #20B2AA;
+    #             color: black;
+    #         }
+    #     """)
+    #     super().enterEvent(event)
 
-    def leaveEvent(self, event):
-        """When mouse leaves widget"""
-        self.setStyleSheet("""
-            QTreeWidget::item {
-                background-color: #F0F8FF;
-            }
-            QTreeWidget::item:selected {
-                background-color: #F0F8FF;
-                color: black;
-            }
-        """)
-        super().leaveEvent(event)
+    # def leaveEvent(self, event):
+    #     """When mouse leaves widget"""
+    #     self.setStyleSheet("""
+    #         QTreeWidget::item {
+    #             background-color: #F0F8FF;
+    #         }
+    #         QTreeWidget::item:selected {
+    #             background-color: #F0F8FF;
+    #             color: black;
+    #         }
+    #     """)
+    #     super().leaveEvent(event)
 
     # def tree_wid_itm_processed(self, tree_item):
     #     self.addTopLevelItem(tree_item)
@@ -384,62 +382,63 @@ class View(QMainWindow):
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
 
-    def set_style_sheet(self):
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #2b2b2b; /* Dark VFX-style background */
-            }
+    # def set_style_sheet(self):
+    #     self.setStyleSheet("""
+    #         QMainWindow {
+    #             background-color: #2b2b2b; /* Dark VFX-style background */
+    #         }
 
-            QTabWidget::pane {
-                border: 1px solid #444;
-                background: #3c3c3c;
-            }
+    #         QTabWidget::pane {
+    #             border: 1px solid #444;
+    #             background: #3c3c3c;
+    #         }
 
-            QTabBar::tab {
-                background: #3c3c3c;
-                color: #ddd;
-                padding: 6px 12px;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }
+    #         QTabBar::tab {
+    #             background: #3c3c3c;
+    #             color: #ddd;
+    #             padding: 6px 12px;
+    #             border-top-left-radius: 4px;
+    #             border-top-right-radius: 4px;
+    #         }
 
-            QTabBar::tab:selected {
-                background: #5a5a5a;
-                color: white;
-            }
+    #         QTabBar::tab:selected {
+    #             background: #5a5a5a;
+    #             color: white;
+    #         }
 
-            QTreeWidget {
-                background-color: #333;
-                alternate-background-color: #3c3c3c;
-                color: #ddd;
-                border: 1px solid #555;
-            }
-            QTreeWidget::item {
-                padding: 4px;
-            }
-            QTreeWidget::item:selected {
-                background-color: #5a87f7;
-                color: white;
-            }
+    #         QTreeWidget {
+    #             background-color: #333;
+    #             alternate-background-color: #3c3c3c;
+    #             color: #ddd;
+    #             border: 1px solid #555;
+    #         }
+    #         QTreeWidget::item {
+    #             padding: 4px;
+    #         }
+    #         QTreeWidget::item:selected {
+    #             background-color: #5a87f7;
+    #             color: white;
+    #         }
 
-            QListWidget {
-                background-color: #333;
-                alternate-background-color: #3c3c3c;
-                color: #ddd;
-                border: 1px solid #555;
-            }
-            QListWidget::item {
-                padding: 4px;
-            }
-            QListWidget::item:selected {
-                background-color: #5a87f7;
-                color: white;
-            }
-        """)
+    #         QListWidget {
+    #             background-color: #333;
+    #             alternate-background-color: #3c3c3c;
+    #             color: #ddd;
+    #             border: 1px solid #555;
+    #         }
+    #         QListWidget::item {
+    #             padding: 4px;
+    #         }
+    #         QListWidget::item:selected {
+    #             background-color: #5a87f7;
+    #             color: white;
+    #         }
+    #     """)
 
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
 
         for widget in thumbnil_wid_items_lst:
+            print("widget ==== ", widget)
             list_item = QListWidgetItem()
             list_item.setSizeHint(widget.sizeHint())
             self.lst_wid.addItem(list_item)
@@ -496,10 +495,11 @@ class View(QMainWindow):
         lst_vlay = QVBoxLayout(lst_widget)
 
         self.lbl_thumb_path = QLabel('')
+        # #444444
         self.lbl_thumb_path.setStyleSheet("""
             QLabel {
                 color: white;                
-                background-color: #444444;    
+                background-color: #4d4d4d;         
                 padding: 5px;               
                 border-radius: 3px;    
             }       
@@ -517,8 +517,8 @@ class View(QMainWindow):
     def set_lbl_thumbnil_path(self, text):
         self.lbl_thumb_path.setText(f"Thumbnil Directory Path:\n{text}")
         font = QFont()
-        font.setBold(True)
-        font.setFamilies("Arial")
+        # font.setBold(True)
+        font.setFamilies("Verdana")
         self.lbl_thumb_path.setFont(font)
 
     def add_viewer_wid(self):
@@ -576,7 +576,7 @@ class View(QMainWindow):
 
 
 class TreeItemClickSignals(QObject):
-    custom_context = Signal(list)
+    custom_context = Signal(list, str, str)
     completed = Signal()
 
 class TreeItemClickWorkerPool(QRunnable):
@@ -585,21 +585,30 @@ class TreeItemClickWorkerPool(QRunnable):
         self.thumbnil_wid_items_lst = thumbnil_wid_items_lst
         self.thumb_dir_name = thumb_dir_name
         self.msg = msg
-
         self.signal_obj = TreeItemClickSignals()
 
+
     def run(self):
-        if self.thumbnil_wid_items_lst:
-            self.view.clear_lst_wid()
-            self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
-            self.view.add_thumbnil_wid(self.thumbnil_wid_items_lst)
+        # if self.thumbnil_wid_items_lst:
+        #     self.view.clear_lst_wid()
+        #     self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
+        #     self.view.add_thumbnil_wid(self.thumbnil_wid_items_lst)
 
-            self.signal_obj.custom_context.emit(self.thumbnil_wid_items_lst)
+        #     self.signal_obj.custom_context.emit(
+        #         self.thumbnil_wid_items_lst,
+        #         self.thumb_dir_name,
+        #         self.msg)
 
-        else:
-            self.view.clear_lst_wid()
-            self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
-            self.view.show_notification(self.msg)
+        # else:
+        #     self.view.clear_lst_wid()
+        #     self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
+        #     self.view.show_notification(self.msg)
+
+
+        self.signal_obj.custom_context.emit(
+            self.thumbnil_wid_items_lst,
+            self.thumb_dir_name,
+            self.msg)
 
         self.signal_obj.completed.emit()
 
@@ -632,7 +641,6 @@ class Controller(QObject):
 
     def proj_combo_index_changed(self):
         proj_code = self.prefs_window.get_current_project_code()
-        # ext_list = self.model.get_project_extension(proj_code)
         ext_list = self.model.fetch_project_extensions(proj_code)
         print("ext_list ---- ", ext_list)
         
@@ -646,42 +654,47 @@ class Controller(QObject):
 
     def on_item_clicked(self, item, column):
         # This code is without threadpool
-        # thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
+        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
 
-        # if thumbnil_wid_items_lst:
-        #     self.view.clear_lst_wid()
-        #     self.view.set_lbl_thumbnil_path(thumb_dir_name)
-        #     self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
+        if thumbnil_wid_items_lst:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
 
-        #     for w in thumbnil_wid_items_lst:
-        #         w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+            for w in thumbnil_wid_items_lst:
+                w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
 
-        # else:
-        #     self.view.clear_lst_wid()
-        #     self.view.set_lbl_thumbnil_path(thumb_dir_name)
-        #     self.view.show_notification(msg)
+        else:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.show_notification(msg)
 
         # ---------------------------------------------------------------------------------------------
        
-        # This is with threadpool
+        # This is with threadpool (UI is crushing when click on qtreewidgetitem)
 
-        thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
-        thread_pool = QThreadPool.globalInstance()
+        # thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)      
 
-        tree_item_click_worker_pool = TreeItemClickWorkerPool(thumbnil_wid_items_lst, thumb_dir_name, msg)
+        # tree_item_click_worker_pool = TreeItemClickWorkerPool(thumbnil_wid_items_lst, thumb_dir_name, msg)
+        # tree_item_click_worker_pool.signal_obj.custom_context.connect(self.update_ui_frm_workerpool)
 
-        tree_item_click_worker_pool.signal_obj.custom_context.connect(self.thumbnail_contextc_action)
-        tree_item_click_worker_pool.signal_obj.completed.connect(self.on_task_completed)
+        # thread_pool = QThreadPool.globalInstance()
+        # thread_pool.start(tree_item_click_worker_pool)
 
-        thread_pool.start(tree_item_click_worker_pool)
-
-
-    def on_task_completed(self):
-        print("*** Thumbnil task completed ***")
-
-    def thumbnail_contextc_action(self, thumbnil_wid_items_lst):
+    def thumbnail_context_action(self, thumbnil_wid_items_lst):
         for w in thumbnil_wid_items_lst:
             w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+
+    def update_ui_frm_workerpool(self, thumbnil_wid_items_lst, thumb_dir_name, msg):
+        if thumbnil_wid_items_lst:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
+            self.thumbnail_contextc_action(thumbnil_wid_items_lst)
+        else:
+            self.view.clear_lst_wid()
+            self.view.set_lbl_thumbnil_path(thumb_dir_name)
+            self.view.show_notification(msg)        
 
     def on_files_dropped(self, drop_urls):
         folder_tree_data_lst = self.model.get_urls_data(drop_urls)
@@ -832,10 +845,11 @@ class ThumbnilWidget(QWidget):
 
     def populate_menu_actions(self, pos):
         self.menu = QMenu(self)
+        # #f9f9f9
         self.menu.setStyleSheet("""
             QMenu {
-                background-color: #f9f9f9;  /* Light background */
-                border: 1px solid #ccc;     /* Light gray border */
+                background-color: #8c8c8;  /* Light background */
+                border: 1px solid #ccc;     /* Light black border */
                 padding: 4px;
             }
 
@@ -845,13 +859,13 @@ class ThumbnilWidget(QWidget):
             }
 
             QMenu::item:selected {
-                background-color: #e0e0e0;  /* Light gray when hovered */
+                background-color: #b3e0ff;  /* Light gray when hovered */
                 color: black;
             }
 
             QMenu::separator {
                 height: 1px;
-                background: #dcdcdc;
+                background: #cccccc;
                 margin: 4px 0;
             }
         """)
@@ -873,7 +887,7 @@ class ThumbnilWidget(QWidget):
     def set_style_sheet(self):
         self.setStyleSheet("""
                 border: 3px grey;
-                background-color: #f5f5f5;
+                background-color: #006bb3;
         """)
 
     def add_widgets(self):
@@ -925,11 +939,11 @@ class ThumbnilWidget(QWidget):
         self.mainhlay.addLayout(hlay)
 
     def enterEvent(self, event):
-        self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
+        # self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        self.setStyleSheet("")
+        # self.setStyleSheet("")
         super().leaveEvent(event)
 
 
@@ -1229,6 +1243,7 @@ def setup_config():
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    # app.setStyleSheet(open(STYLE_QSSPATH, "r").read())
     model = Model()
     view = View(app)
     setup_config()
