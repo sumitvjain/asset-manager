@@ -1,4 +1,3 @@
-from  pprint import pprint
 from PySide2.QtWidgets import (
     QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
     QWidget, 
@@ -26,6 +25,7 @@ from PySide2.QtWidgets import (
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
 from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool, QRunnable
 from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
+from  pprint import pprint
 import sys, os
 import random
 import json
