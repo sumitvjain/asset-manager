@@ -196,6 +196,62 @@ class TreeWidget(QTreeWidget):
         self.path_item_pairs = []
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
+        self.set_style_sheet()
+
+
+    def set_style_sheet(self):
+            # /* Tree items (normal state) */
+            # QTreeWidget::item {
+            #     padding: 4px 6px;
+            #     border: 1px solid transparent;
+            # }
+
+            # /* Hover effect */
+            # QTreeWidget::item:hover {
+            #     background-color: #3d3d3d;
+            #     border: 1px solid #555;
+            #     border-radius: 3px;
+            # }
+
+            # /* Selected item */
+            # QTreeWidget::item:selected {
+            #     background-color: #50597b;
+            #     border: 1px solid #6a7ca8;
+            #     border-radius: 3px;
+            #     color: #ffffff;
+            # }
+
+            # /* Branch indicators (expand/collapse arrows) */
+            # QTreeView::branch:closed:has-children {
+            #     border-image: none;
+            #     image: url(:/icons/arrow-right.png); /* collapsed */
+            # }
+
+            # QTreeView::branch:open:has-children {
+            #     border-image: none;
+            #     image: url(:/icons/arrow-down.png);  /* expanded */
+            # }
+
+            # /* Optional: remove dotted line */
+            # QTreeView::branch {
+            #     background: transparent;
+            #     border: none;
+            # }
+
+
+
+
+        self.setStyleSheet("""
+            /* QTreeWidget general styling */
+            QTreeWidget {
+                background-color: #2b2b2b;
+                border: 1px solid #444;
+                color: #eeeeee;
+                font: 12px "Segoe UI";
+                show-decoration-selected: 1;
+            }
+
+        """)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -252,6 +308,8 @@ class TreeWidget(QTreeWidget):
     #             event.ignore()
     #  ---------------------------------------------------------------------------------
 
+    # -------------------------------------------------------------------------------
+    # this is working enterevent and leaveevent
     # def enterEvent(self, event):
     #     """When mouse enters widget"""
     #     self.setStyleSheet("""
@@ -281,9 +339,41 @@ class TreeWidget(QTreeWidget):
     #         }
     #     """)
     #     super().leaveEvent(event)
+    # -------------------------------------------------------------------------------
 
-    # def tree_wid_itm_processed(self, tree_item):
-    #     self.addTopLevelItem(tree_item)
+    def enterEvent(self, event):
+        """When mouse enters widget"""
+        # #8c8c8c;
+        self.setStyleSheet("""
+            QTreeWidget::item {
+                background-color: #4d4d4d;
+            }
+            QTreeWidget {
+                background-color: #2b2b2b;
+                border: 3px solid #444;
+                color: #eeeeee;
+                font: 12px "Segoe UI";
+                show-decoration-selected: 1;
+            }
+        """)
+        super().enterEvent(event)
+
+    # def leaveEvent(self, event):
+    #     """When mouse leaves widget"""
+    #     self.setStyleSheet("""
+    #         QTreeWidget::item {
+    #             background-color: #F0F8FF;
+    #         }
+    #         QTreeWidget::item:selected {
+    #             background-color: #F0F8FF;
+    #             color: black;
+    #         }
+    #     """)
+    #     super().leaveEvent(event)
+
+
+    def tree_wid_itm_processed(self, tree_item):
+        self.addTopLevelItem(tree_item)
 
     def build_tree_view(self, path, tree_item):     
         dir_contents = os.listdir(path)
@@ -354,15 +444,25 @@ class View(QMainWindow):
         super().__init__()
         self.setWindowTitle("Asset Manager")
         self.set_geometry(app)
+        self.set_style_sheet()
 
         self.pixmap = None
         self.lbl_thumb_path = None
         self.tree_wid = None
 
         self.scroll = QScrollArea()
-        widget = QWidget()  
+        widget = QWidget() 
+
+        widget.setStyleSheet("""
+            QWidget {
+                background-color: #595959
+            }
+        """)
         self.mainvlay = QVBoxLayout()
+        self.mainvlay.setContentsMargins(1, 1, 1, 1)
         self.splitter = QSplitter(Qt.Horizontal)
+
+        # self.splitter.setContentsMargins(2, 2, 2, 2)
         
         widget.setLayout(self.mainvlay)
         self.setCentralWidget(widget)
@@ -371,8 +471,20 @@ class View(QMainWindow):
         self.add_tree_wid()
         self.add_lst_wid()
         self.add_viewer_wid()
+        self.set_menu_style_sheet()
 
         self.mainvlay.addWidget(self.splitter)
+        self.splitter.setSizes([200, 300, 500])
+
+
+    def set_style_sheet(self):
+        # color: #000000; 
+        self.setStyleSheet("""
+            background-color: #404040;
+            border: none;
+
+                   
+        """)
 
     def set_geometry(self, app):
         screen = app.primaryScreen().geometry()
@@ -382,58 +494,68 @@ class View(QMainWindow):
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
 
-    # def set_style_sheet(self):
-    #     self.setStyleSheet("""
-    #         QMainWindow {
-    #             background-color: #2b2b2b; /* Dark VFX-style background */
-    #         }
+    def set_menu_style_sheet(self):
+        # color: #ffffff;  #404040;
+        self.setStyleSheet("""
+            /* ---------------- QMenuBar ---------------- */
+            QMenuBar {
+                background-color: #333333;
+                color: #e6e6e6;
+                padding: 4px;
+                border-bottom: 1px solid #444;
+            }
 
-    #         QTabWidget::pane {
-    #             border: 1px solid #444;
-    #             background: #3c3c3c;
-    #         }
+            QMenuBar::item {
+                background: transparent;
+                padding: 4px 12px;
+                margin: 4px 2px;
+                border-radius: 4px;
+            }
 
-    #         QTabBar::tab {
-    #             background: #3c3c3c;
-    #             color: #ddd;
-    #             padding: 6px 12px;
-    #             border-top-left-radius: 4px;
-    #             border-top-right-radius: 4px;
-    #         }
+            QMenuBar::item:selected {
+                background: #3d3d3d;
+                
+            }
 
-    #         QTabBar::tab:selected {
-    #             background: #5a5a5a;
-    #             color: white;
-    #         }
+            QMenuBar::item:pressed {
+                background: #5a87f7;
+                color: white;
+            }
 
-    #         QTreeWidget {
-    #             background-color: #333;
-    #             alternate-background-color: #3c3c3c;
-    #             color: #ddd;
-    #             border: 1px solid #555;
-    #         }
-    #         QTreeWidget::item {
-    #             padding: 4px;
-    #         }
-    #         QTreeWidget::item:selected {
-    #             background-color: #5a87f7;
-    #             color: white;
-    #         }
+            /* ---------------- QMenu (for QAction items) ---------------- */
+            QMenu {
+                background-color: #2b2b2b;
+                border: 1px solid #444;
+                border-radius: 6px;
+                padding: 6px;
+            }
 
-    #         QListWidget {
-    #             background-color: #333;
-    #             alternate-background-color: #3c3c3c;
-    #             color: #ddd;
-    #             border: 1px solid #555;
-    #         }
-    #         QListWidget::item {
-    #             padding: 4px;
-    #         }
-    #         QListWidget::item:selected {
-    #             background-color: #5a87f7;
-    #             color: white;
-    #         }
-    #     """)
+            QMenu::item {
+                background-color: transparent;
+                padding: 6px 24px;
+                margin: 2px;
+                border-radius: 4px;
+                color: #e6e6e6;
+            }
+
+            QMenu::item:selected {
+                background-color: #5a87f7;
+                color: white;
+            }
+
+            QMenu::item:disabled {
+                color: #666;
+            }
+
+            /* Menu separator */
+            QMenu::separator {
+                height: 1px;
+                background: #444;
+                margin: 4px 8px;
+            }
+                           
+
+        """)  
 
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
 
@@ -449,7 +571,9 @@ class View(QMainWindow):
     def clear_lst_wid(self):
         self.lst_wid.clear()
 
+
     def add_menu(self):
+        # self.set_menu_style_sheet()
         menu = self.menuBar()
 
         # File menu
@@ -488,18 +612,70 @@ class View(QMainWindow):
 
     def add_tree_wid(self):
         self.tree_wid = TreeWidget()
+
         self.splitter.addWidget(self.tree_wid)
-        
+
+    # def set_tab_style_sheet(self):
+    #     # #e6e6e6; 6px 12px; border: 3px solid #444;
+    #     self.setStyleSheet("""
+
+    #         /* ---------------- QTabWidget (for QAction items) ---------------- */
+    #         QTabWidget::pane {
+    #             border: 1px solid #444;
+    #             background-color: #2b2b2b;
+    #             border-radius: 4px;
+    #             padding: 6px;
+    #         }
+
+    #         /* Tab bar */
+    #         QTabBar::tab {
+    #             background: #3d3d3d;
+    #             color: #595959;
+    #             padding: 2px 2px;
+    #             margin: 2px;
+    #             border: 1px solid #444;
+    #             # border-top-left-radius: 6px;
+    #             # border-top-right-radius: 6px;
+    #         }
+
+    #         /* Hovered tab */
+    #         QTabBar::tab:hover {
+    #             background: #505050;
+    #             border: 1px solid #666;
+    #         }
+
+    #         /* Selected tab */
+    #         QTabBar::tab:selected {
+    #             background: #5a87f7;
+    #             color: white;
+    #             border: 1px solid #6a7ca8;
+    #         }
+
+    #         /* Unselected tab */
+    #         QTabBar::tab:!selected {
+    #             background: #3d3d3d;
+    #         }
+
+    #         /* Disabled tab */
+    #         QTabBar::tab:disabled {
+    #             color: #666;
+    #             background: #2b2b2b;
+    #         }
+
+    #     """)
+
+
     def add_lst_wid(self):
         lst_widget = QWidget()
         lst_vlay = QVBoxLayout(lst_widget)
+        lst_vlay.setContentsMargins(1,1,1,1)
 
         self.lbl_thumb_path = QLabel('')
-        # #444444
+        # #444444 #4d4d4d;
         self.lbl_thumb_path.setStyleSheet("""
             QLabel {
                 color: white;                
-                background-color: #4d4d4d;         
+                background-color: #333333;        
                 padding: 5px;               
                 border-radius: 3px;    
             }       
@@ -507,6 +683,13 @@ class View(QMainWindow):
 
         self.lst_wid = QListWidget()
         self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
+        
+        self.lst_wid.setStyleSheet("""
+            QListWidget {             
+                background-color: #2b2b2b;  
+                border: 3px solid #444;          
+            }       
+        """)
 
         lst_vlay.addWidget(self.lbl_thumb_path)
         lst_vlay.addWidget(self.lst_wid)
@@ -523,11 +706,24 @@ class View(QMainWindow):
 
     def add_viewer_wid(self):
         self.viewer_wid = QWidget()
+
         right_vlay = QVBoxLayout(self.viewer_wid)
+        right_vlay.setContentsMargins(0, 0, 0, 0)
         tab_vlay = QVBoxLayout()
         self.tab_wid = QTabWidget()
+
         self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
         self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
+        # border: 3px solid #444;
+        # self.tab_wid.setStyleSheet('background-color: #333333;')
+        self.tab_wid.setStyleSheet("""   
+                                         
+                background-color: #2b2b2b;  
+                
+                background: #2b2b2b;   /* background inside tab widget */
+ 
+      
+        """)
    
         tab_vlay.addWidget(self.tab_wid)
         right_vlay.addLayout(tab_vlay)    
@@ -535,6 +731,13 @@ class View(QMainWindow):
 
     def create_viewer_tab(self, meta=None):
         tab_view_wid = QWidget()
+        # tab_view_wid.setStyleSheet("""
+         
+        #         background-color: #2b2b2b;  
+
+        #         border: 3px solid #444;          
+     
+        # """)
         tab_view_vlay_1 = QVBoxLayout()
         if meta is None:
             self.tab_view_lbl = QLabel()
@@ -556,7 +759,101 @@ class View(QMainWindow):
             self.tab_view_lbl.setAlignment(Qt.AlignCenter)       
 
     def open_pref_dialog(self, existing_prefs_data):
+
+        dialog_style = """
+        QDialog {
+            background-color: #2b2b2b;
+            color: #f0f0f0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        /* QLabel */
+        QLabel {
+            color: #f0f0f0;
+            font-size: 12px;
+            padding: 2px;
+        }
+
+        /* QComboBox */
+        QComboBox {
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            border: 1px solid #555;
+            padding: 4px;
+            border-radius: 3px;
+        }
+        QComboBox:hover {
+            border: 1px solid #888;
+        }
+        QComboBox::drop-down {
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 20px;
+            border-left: 1px solid #555;
+            background-color: #444;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #2b2b2b;
+            selection-background-color: #555;
+            selection-color: white;
+        }
+
+        /* QListWidget */
+        QListWidget {
+            background-color: #333;
+            color: #f0f0f0;
+            border: 1px solid #555;
+            padding: 2px;
+        }
+        QListWidget::item {
+            padding: 4px;
+        }
+        QListWidget::item:selected {
+            background-color: #555;
+            color: white;
+        }
+
+        /* Checkable QListWidgetItem */
+        QListWidget::indicator {
+            width: 14px;
+            height: 14px;
+        }
+        QListWidget::indicator:unchecked {
+            border: 1px solid #aaa;
+            background-color: #444;
+        }
+        QListWidget::indicator:checked {
+            border: 1px solid #5a9;
+            background-color: #2e8b57;
+        }
+
+        /* QPushButton */
+        QPushButton {
+            background-color: #444;
+            color: #f0f0f0;
+            border: 1px solid #666;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #555;
+            border: 1px solid #888;
+        }
+        QPushButton:pressed {
+            background-color: #222;
+            border: 1px solid #888;
+        }
+        QPushButton:disabled {
+            background-color: #333;
+            color: #777;
+            border: 1px solid #444;
+        }
+        """
+
+
         prefs_window = PreferencesDialog(existing_prefs_data, self)
+        prefs_window.setStyleSheet(dialog_style)
         if prefs_window:
             prefs_window.show()
 
@@ -578,6 +875,7 @@ class View(QMainWindow):
 class TreeItemClickSignals(QObject):
     custom_context = Signal(list, str, str)
     completed = Signal()
+
 
 class TreeItemClickWorkerPool(QRunnable):
     def __init__(self, thumbnil_wid_items_lst, thumb_dir_name, msg):
@@ -701,9 +999,10 @@ class Controller(QObject):
         self.view.tree_wid.load_folder_tree_into_ui(folder_tree_data_lst)
 
 
-    def handle_context_menu(self, widget, pos):        
+    def handle_context_menu(self, widget, pos):       
+        
         widget.populate_menu_actions(pos)
-        self.action = widget.menu.exec_(widget.mapToGlobal(pos))
+        self.action = widget.menu.exec_(widget.mapToGlobal(pos)) 
 
         if self.action:
             self.action_clicked(self.action, pos)
@@ -844,31 +1143,68 @@ class ThumbnilWidget(QWidget):
         self.customContextMenuRequested.connect(self.contextMenuRequested)
 
     def populate_menu_actions(self, pos):
+        
         self.menu = QMenu(self)
-        # #f9f9f9
+
+
+
+
         self.menu.setStyleSheet("""
+
+
+            /* ---------------- QMenu ---------------- */
             QMenu {
-                background-color: #8c8c8;  /* Light background */
-                border: 1px solid #ccc;     /* Light black border */
-                padding: 4px;
+                background-color: #333;
+                border: 1px solid #444;
+                border-radius: 6px;
+                padding: 6px;
             }
 
             QMenu::item {
-                background-color: transparent;
-                padding: 4px 20px;
+                padding: 6px 24px;
+                margin: 2px;
+                border-radius: 4px;
+                color: #e6e6e6;
+                border: 1px solid transparent; /* default no border */
             }
 
+            /* Hover effect */
+            QMenu::item:hover {
+                background-color: rgba(90, 135, 247, 0.15); /* subtle accent */
+                border: 1px solid #5a87f7;
+                color: #ffffff;
+            }
+
+            /* Selected (clicked/active) */
             QMenu::item:selected {
-                background-color: #b3e0ff;  /* Light gray when hovered */
-                color: black;
+                background-color: #5a87f7;
+                border: 1px solid #3f73ff;
+                color: #ffffff;
             }
 
+            /* Disabled item */
+            QMenu::item:disabled {
+                color: #666;
+                border: 1px solid transparent;
+                background: transparent;
+            }
+
+            /* Separator line */
             QMenu::separator {
                 height: 1px;
-                background: #cccccc;
-                margin: 4px 0;
+                background: #444;
+                margin: 4px 8px;
             }
+
+            /* Submenu indicator (arrow) */
+            QMenu::indicator {
+                width: 14px;
+                height: 14px;
+            }
+
+
         """)
+ 
 
         # self.play_menu = self.menu.addMenu("Load in Viewer")
         # self.exr_action = self.play_menu.addAction("exr")
@@ -880,15 +1216,10 @@ class ThumbnilWidget(QWidget):
 
         self.remove_action = self.menu.addAction("Remove")
         self.compare_action = self.menu.addAction("Compare")
+        self.set_thumb_background_color()
 
     def load_in_viewer(self):
         print("EXR clicked")
-
-    def set_style_sheet(self):
-        self.setStyleSheet("""
-                border: 3px grey;
-                background-color: #006bb3;
-        """)
 
     def add_widgets(self):
         hlay = QHBoxLayout()
@@ -909,10 +1240,14 @@ class ThumbnilWidget(QWidget):
         hlay.addWidget(lbl_full_path)
         hlay.addWidget(lbl_thumbnil)   
 
-        vlay = QVBoxLayout()
-        vlay.setContentsMargins(2,0,0,0)
+        vlay1 = QVBoxLayout()
+        vlay1.setContentsMargins(2,0,0,0)
+
+        vlay2 = QVBoxLayout()
+        vlay3 = QVBoxLayout()
 
         lbl_title = QLabel(f"  {self.img_data_dict['lbl_title']}  ")
+        lbl_title.setStyleSheet("text-transform: uppercase;")
         font = QFont()
         font.setPointSize(10)
         lbl_title.setFont(font)
@@ -928,23 +1263,88 @@ class ThumbnilWidget(QWidget):
         """
         )
 
+        self.setStyleSheet("""
+            QLabel {
+                color: white;                
+                background-color: #4d4d4d;         
+                padding: 5px;               
+                border: 1px solid #444;
+                border-radius: 3px;
+            }       
+        """)
+
         font.setPointSize(8)
         lbl_info.setFont(font)
 
-        vlay.addWidget(lbl_title)
-        vlay.addWidget(lbl_info)
+        # ------------------------------------------
+        # this is working layout
 
-        hlay.addLayout(vlay)
+        # vlay.addWidget(lbl_title)
+        # vlay.addWidget(lbl_info)
+
+        # hlay.addLayout(vlay)
+        # -----------------------------------------
+
+        # ==============================================
+        # this is new layout just checking
+        vlay2.addWidget(lbl_title)
+        vlay3.addWidget(lbl_info)
+        vlay1.addLayout(vlay2)
+        vlay1.addLayout(vlay3)
+        hlay.addLayout(vlay1)
+        # ==============================================
 
         self.mainhlay.addLayout(hlay)
 
+    # def set_style_sheet(self):
+    #     # background-color: #006bb3;
+    #     self.setStyleSheet("""
+    #             border: 3px grey;
+    #             background-color: #4d4d4d;
+                
+    #     """)
+
+    def set_style_sheet(self):
+        # background-color: #006bb3;
+        self.setStyleSheet("""
+            QLabel {
+                color: white;                
+                background-color: #4d4d4d;         
+                padding: 5px;               
+                border: 1px solid #444;
+                border-radius: 3px;
+            }       
+        """)
+
+
+    def set_thumb_background_color(self):
+        pass
+        self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;") # ** this is important line **
+            # QLabel {
+            #     color: white;                
+            #     background-color: #4d4d4d;         
+            #     padding: 5px;               
+            #     border: 1px solid #444;
+            #     border-radius: 3px;
+            # }  
+
     def enterEvent(self, event):
         # self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
+        self.set_thumb_background_color()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        # self.setStyleSheet("")
+        # self.setStyleSheet("background-color: #4d4d4d;")
+        self.set_style_sheet()
         super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        self.set_thumb_background_color()
+        return super().mousePressEvent(event)
+    
+    # def mouseReleaseEvent(self, event):
+    #     self.set_thumb_background_color()
+    #     return super().mouseReleaseEvent(event)
 
 
 class Model():

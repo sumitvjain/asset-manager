@@ -83,26 +83,28 @@ QTabBar::tab:selected {
     color: white;
 }
 
-/* ---------- QTreeWidget / QListWidget ---------- */
-QTreeWidget, QListWidget {
+/* ----------  / QListWidget ---------- */
+QListWidget {
     background-color: #333;
     border: 1px solid #444;
     alternate-background-color: #2f2f2f;
     outline: none;
 }
 
-QTreeWidget::item, QListWidget::item {
+QListWidget::item {
     padding: 6px 8px;
 }
 
-QTreeWidget::item:hover, QListWidget::item:hover {
+
+ QListWidget::item:hover {
     background-color: rgba(90,135,247,0.06);
 }
 
-QTreeWidget::item:selected, QListWidget::item:selected {
+QListWidget::item:selected {
     background-color: #5a87f7;
-    color: white;
 }
+
+
 
 /* ---------- QLineEdit / QTextEdit / QPlainTextEdit ---------- */
 QLineEdit, QTextEdit, QPlainTextEdit {
@@ -155,25 +157,10 @@ QScrollBar::add-line, QScrollBar::sub-line {
     height: 0;
 }
 
-/* ---------- QMenuBar / QMenu ---------- */
+/* ---------- QMenuBar ---------- */
 QMenuBar {
     background: #2b2b2b;
     color: #e6e6e6;
-}
-
-QMenu {
-    background-color: #333;
-    border: 1px solid #444;
-    padding: 4px;
-}
-
-QMenu::item {
-    padding: 6px 20px;
-}
-
-QMenu::item:selected {
-    background-color: rgba(90,135,247,0.12);
-    color: white;
 }
 
 /* ---------- QProgressBar ---------- */
