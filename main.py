@@ -1,12 +1,3 @@
-# from PySide2.QtWidgets import (
-#     QApplication, 
-# )
-# import sys
-
-# from view import view
-# from model import Model
-# from controller import Controller
-
 from  pprint import pprint
 from PySide2.QtWidgets import (
     QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
@@ -55,12 +46,10 @@ CONFIG_FILEPATH = Path(DOCUMENTS_DIRPATH) / APP_DIRNAME / CONFIG_FILENAME
 STYLE_QSSPATH =   Path(os.path.dirname(__file__)) / "style.qss" 
 
 
-
 class PreferencesDialog(QDialog):
     def __init__(self, existing_prefs_data, parent=None, ):
         super().__init__(parent)
         self.existing_prefs_data = existing_prefs_data
-        # self.ext_lst = ["exr", "jpeg", "jpg", "png", "mov"]
         self.config_file_path = CONFIG_FILEPATH
         self.setWindowTitle("Application Preferences")
         icon_path = Path.cwd() / "icon" / "gear_cog_wheel.jpg"
@@ -103,26 +92,10 @@ class PreferencesDialog(QDialog):
         btn_hlay.addWidget(self.update_btn)
         self.dialog_vlay.addLayout(btn_hlay)
 
-    # def fetch_project_extensions(self, selected_proj):
-    #     with open(self.config_file_path, "r") as rd:
-    #         config_data = json.load(rd)
-
-    #     raw_ext_dict = config_data[selected_proj]['extension']
-    #     supported_ext_lst = []
-
-    #     for ext_key in raw_ext_dict.keys():
-    #         if raw_ext_dict[ext_key] == True:
-    #             supported_ext_lst.append(ext_key)
-
-    #     return supported_ext_lst
-
     def set_extension_lst(self, supported_ext_lst):
         selected_proj = self.get_current_project_code()
         if selected_proj != '-- Select Project --':
             self.lst_wid.clear()
-            # supported_ext_lst = self.fetch_project_extensions(selected_proj)
-
-            # if supported_ext_lst:
 
             print("AVAILABLE_EXTENSIONS ---- ", AVAILABLE_EXTENSIONS)
             for ext in AVAILABLE_EXTENSIONS:
@@ -161,8 +134,6 @@ class PreferencesDialog(QDialog):
 
 
 class TreeWidgetWorker(QObject):
-    # tree_wid_itm_proc = Signal(QTreeWidgetItem)
-    # tree_bld_proc = Signal(str, QTreeWidgetItem)
     tree_data_ready = Signal(str, dict)
     finished = Signal()
 
@@ -174,72 +145,20 @@ class TreeWidgetWorker(QObject):
         for dict_itm in self.folder_tree_data_lst:
             base_nm = list(dict_itm.keys())[0]
             path = dict_itm[base_nm]["path"]
-            print("base_nm --- ", base_nm)
-            print("path ---- ", path)
-            # tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
-            # self.tree_wid_itm_proc.emit(tree_item)
-            # self.tree_bld_proc.emit(path, tree_item)
-
             self.tree_data_ready.emit(base_nm, dict_itm[base_nm])
 
         self.finished.emit()
 
 
 class TreeWidget(QTreeWidget):  
-    # itemPathClicked = Signal(str)
     filesDropped = Signal(list)
     
     def __init__(self):
         super().__init__()
-        # self.drive = None
         self.thread_obj_lst = []
         self.path_item_pairs = []
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
-        self.set_style_sheet()
-
-
-    def set_style_sheet(self):
-            # /* Tree items (normal state) */
-            # QTreeWidget::item {
-            #     padding: 4px 6px;
-            #     border: 1px solid transparent;
-            # }
-
-            # /* Hover effect */
-            # QTreeWidget::item:hover {
-            #     background-color: #3d3d3d;
-            #     border: 1px solid #555;
-            #     border-radius: 3px;
-            # }
-
-            # /* Selected item */
-            # QTreeWidget::item:selected {
-            #     background-color: #50597b;
-            #     border: 1px solid #6a7ca8;
-            #     border-radius: 3px;
-            #     color: #ffffff;
-            # }
-
-            # /* Branch indicators (expand/collapse arrows) */
-            # QTreeView::branch:closed:has-children {
-            #     border-image: none;
-            #     image: url(:/icons/arrow-right.png); /* collapsed */
-            # }
-
-            # QTreeView::branch:open:has-children {
-            #     border-image: none;
-            #     image: url(:/icons/arrow-down.png);  /* expanded */
-            # }
-
-            # /* Optional: remove dotted line */
-            # QTreeView::branch {
-            #     background: transparent;
-            #     border: none;
-            # }
-
-
-
 
         self.setStyleSheet("""
             /* QTreeWidget general styling */
@@ -272,74 +191,6 @@ class TreeWidget(QTreeWidget):
             # event.accept() 
         else:
             event.ignore()
-
-    # --------------------------------------------------------------------------------
-    # This is fully working code
-    # def dropEvent(self, event):
-    
-    #     if event.mimeData().hasUrls():
-    #         drop_urls = event.mimeData().urls()
-    #         self.clear()
-
-    #         for url in drop_urls:
-    #             path = url.toLocalFile() 
-    #             if self.drive == None:
-    #                 self.drive = re.split(r"[\\/]", path)[0]
-
-    #             if os.path.isdir(path):
-    #                 if len(os.listdir(path)) > 0:
-    #                     base_nm = os.path.basename(path)
-    #                     tree_item = QTreeWidgetItem([base_nm, "Folder"])   
-
-    #                     # ----------------------------------------------------------
-    #                     # This is working code without thread
-    #                     self.addTopLevelItem(tree_item)
-    #                     self.build_tree_view(path, tree_item)
-    #                     event.accept()  
-    #                     # ----------------------------------------------------------   
-
-
-    #                 else:
-    #                     print("Directory check complete: no content found.")
-    #             else:
-    #                 print("This is not directory path")
-    #                 event.ignore()
-    #         else:
-    #             event.ignore()
-    #  ---------------------------------------------------------------------------------
-
-    # -------------------------------------------------------------------------------
-    # this is working enterevent and leaveevent
-    # def enterEvent(self, event):
-    #     """When mouse enters widget"""
-    #     self.setStyleSheet("""
-    #         QTreeWidget::item {
-    #             background-color: #F0F8FF;
-
-    #         }
-    #         QTreeWidget::item:hover {
-    #             background-color: #B0C4DE;
-    #         }
-    #         QTreeWidget::item:selected {
-    #             background-color: #20B2AA;
-    #             color: black;
-    #         }
-    #     """)
-    #     super().enterEvent(event)
-
-    # def leaveEvent(self, event):
-    #     """When mouse leaves widget"""
-    #     self.setStyleSheet("""
-    #         QTreeWidget::item {
-    #             background-color: #F0F8FF;
-    #         }
-    #         QTreeWidget::item:selected {
-    #             background-color: #F0F8FF;
-    #             color: black;
-    #         }
-    #     """)
-    #     super().leaveEvent(event)
-    # -------------------------------------------------------------------------------
 
     def enterEvent(self, event):
         """When mouse enters widget"""
@@ -411,11 +262,7 @@ class TreeWidget(QTreeWidget):
 
         self.thread_obj.started.connect(self.tree_worker.run)
 
-        # self.tree_worker.tree_wid_itm_proc.connect(self.tree_wid_itm_processed)
-        # self.tree_worker.tree_bld_proc.connect(self.build_tree_view)
-
         self.tree_worker.tree_data_ready.connect(self.process_tree_data)
-
         self.tree_worker.finished.connect(self.thread_obj.quit)
         self.tree_worker.finished.connect(self.tree_worker.deleteLater)
 
@@ -461,8 +308,6 @@ class View(QMainWindow):
         self.mainvlay = QVBoxLayout()
         self.mainvlay.setContentsMargins(1, 1, 1, 1)
         self.splitter = QSplitter(Qt.Horizontal)
-
-        # self.splitter.setContentsMargins(2, 2, 2, 2)
         
         widget.setLayout(self.mainvlay)
         self.setCentralWidget(widget)
@@ -481,9 +326,7 @@ class View(QMainWindow):
         # color: #000000; 
         self.setStyleSheet("""
             background-color: #404040;
-            border: none;
-
-                   
+            border: none;                   
         """)
 
     def set_geometry(self, app):
@@ -495,7 +338,6 @@ class View(QMainWindow):
         self.setMaximumHeight(height)
 
     def set_menu_style_sheet(self):
-        # color: #ffffff;  #404040;
         self.setStyleSheet("""
             /* ---------------- QMenuBar ---------------- */
             QMenuBar {
@@ -553,8 +395,6 @@ class View(QMainWindow):
                 background: #444;
                 margin: 4px 8px;
             }
-                           
-
         """)  
 
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
@@ -573,7 +413,6 @@ class View(QMainWindow):
 
 
     def add_menu(self):
-        # self.set_menu_style_sheet()
         menu = self.menuBar()
 
         # File menu
@@ -612,58 +451,7 @@ class View(QMainWindow):
 
     def add_tree_wid(self):
         self.tree_wid = TreeWidget()
-
         self.splitter.addWidget(self.tree_wid)
-
-    # def set_tab_style_sheet(self):
-    #     # #e6e6e6; 6px 12px; border: 3px solid #444;
-    #     self.setStyleSheet("""
-
-    #         /* ---------------- QTabWidget (for QAction items) ---------------- */
-    #         QTabWidget::pane {
-    #             border: 1px solid #444;
-    #             background-color: #2b2b2b;
-    #             border-radius: 4px;
-    #             padding: 6px;
-    #         }
-
-    #         /* Tab bar */
-    #         QTabBar::tab {
-    #             background: #3d3d3d;
-    #             color: #595959;
-    #             padding: 2px 2px;
-    #             margin: 2px;
-    #             border: 1px solid #444;
-    #             # border-top-left-radius: 6px;
-    #             # border-top-right-radius: 6px;
-    #         }
-
-    #         /* Hovered tab */
-    #         QTabBar::tab:hover {
-    #             background: #505050;
-    #             border: 1px solid #666;
-    #         }
-
-    #         /* Selected tab */
-    #         QTabBar::tab:selected {
-    #             background: #5a87f7;
-    #             color: white;
-    #             border: 1px solid #6a7ca8;
-    #         }
-
-    #         /* Unselected tab */
-    #         QTabBar::tab:!selected {
-    #             background: #3d3d3d;
-    #         }
-
-    #         /* Disabled tab */
-    #         QTabBar::tab:disabled {
-    #             color: #666;
-    #             background: #2b2b2b;
-    #         }
-
-    #     """)
-
 
     def add_lst_wid(self):
         lst_widget = QWidget()
@@ -671,7 +459,6 @@ class View(QMainWindow):
         lst_vlay.setContentsMargins(1,1,1,1)
 
         self.lbl_thumb_path = QLabel('')
-        # #444444 #4d4d4d;
         self.lbl_thumb_path.setStyleSheet("""
             QLabel {
                 color: white;                
@@ -694,13 +481,11 @@ class View(QMainWindow):
         lst_vlay.addWidget(self.lbl_thumb_path)
         lst_vlay.addWidget(self.lst_wid)
 
-        # self.splitter.addWidget(self.lst_wid)
         self.splitter.addWidget(lst_widget)
         
     def set_lbl_thumbnil_path(self, text):
         self.lbl_thumb_path.setText(f"Thumbnil Directory Path:\n{text}")
         font = QFont()
-        # font.setBold(True)
         font.setFamilies("Verdana")
         self.lbl_thumb_path.setFont(font)
 
@@ -714,15 +499,9 @@ class View(QMainWindow):
 
         self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
         self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
-        # border: 3px solid #444;
-        # self.tab_wid.setStyleSheet('background-color: #333333;')
-        self.tab_wid.setStyleSheet("""   
-                                         
-                background-color: #2b2b2b;  
-                
-                background: #2b2b2b;   /* background inside tab widget */
- 
-      
+        self.tab_wid.setStyleSheet("""                                        
+                background-color: #2b2b2b;             
+                background: #2b2b2b;   /* background inside tab widget */ 
         """)
    
         tab_vlay.addWidget(self.tab_wid)
@@ -731,13 +510,6 @@ class View(QMainWindow):
 
     def create_viewer_tab(self, meta=None):
         tab_view_wid = QWidget()
-        # tab_view_wid.setStyleSheet("""
-         
-        #         background-color: #2b2b2b;  
-
-        #         border: 3px solid #444;          
-     
-        # """)
         tab_view_vlay_1 = QVBoxLayout()
         if meta is None:
             self.tab_view_lbl = QLabel()
@@ -761,93 +533,93 @@ class View(QMainWindow):
     def open_pref_dialog(self, existing_prefs_data):
 
         dialog_style = """
-        QDialog {
-            background-color: #2b2b2b;
-            color: #f0f0f0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            font-size: 12px;
-        }
+            QDialog {
+                background-color: #2b2b2b;
+                color: #f0f0f0;
+                font-family: "Segoe UI", Arial, sans-serif;
+                font-size: 12px;
+            }
 
-        /* QLabel */
-        QLabel {
-            color: #f0f0f0;
-            font-size: 12px;
-            padding: 2px;
-        }
+            /* QLabel */
+            QLabel {
+                color: #f0f0f0;
+                font-size: 12px;
+                padding: 2px;
+            }
 
-        /* QComboBox */
-        QComboBox {
-            background-color: #3a3a3a;
-            color: #f0f0f0;
-            border: 1px solid #555;
-            padding: 4px;
-            border-radius: 3px;
-        }
-        QComboBox:hover {
-            border: 1px solid #888;
-        }
-        QComboBox::drop-down {
-            subcontrol-origin: padding;
-            subcontrol-position: top right;
-            width: 20px;
-            border-left: 1px solid #555;
-            background-color: #444;
-        }
-        QComboBox QAbstractItemView {
-            background-color: #2b2b2b;
-            selection-background-color: #555;
-            selection-color: white;
-        }
+            /* QComboBox */
+            QComboBox {
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 4px;
+                border-radius: 3px;
+            }
+            QComboBox:hover {
+                border: 1px solid #888;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #555;
+                background-color: #444;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #2b2b2b;
+                selection-background-color: #555;
+                selection-color: white;
+            }
 
-        /* QListWidget */
-        QListWidget {
-            background-color: #333;
-            color: #f0f0f0;
-            border: 1px solid #555;
-            padding: 2px;
-        }
-        QListWidget::item {
-            padding: 4px;
-        }
-        QListWidget::item:selected {
-            background-color: #555;
-            color: white;
-        }
+            /* QListWidget */
+            QListWidget {
+                background-color: #333;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 2px;
+            }
+            QListWidget::item {
+                padding: 4px;
+            }
+            QListWidget::item:selected {
+                background-color: #555;
+                color: white;
+            }
 
-        /* Checkable QListWidgetItem */
-        QListWidget::indicator {
-            width: 14px;
-            height: 14px;
-        }
-        QListWidget::indicator:unchecked {
-            border: 1px solid #aaa;
-            background-color: #444;
-        }
-        QListWidget::indicator:checked {
-            border: 1px solid #5a9;
-            background-color: #2e8b57;
-        }
+            /* Checkable QListWidgetItem */
+            QListWidget::indicator {
+                width: 14px;
+                height: 14px;
+            }
+            QListWidget::indicator:unchecked {
+                border: 1px solid #aaa;
+                background-color: #444;
+            }
+            QListWidget::indicator:checked {
+                border: 1px solid #5a9;
+                background-color: #2e8b57;
+            }
 
-        /* QPushButton */
-        QPushButton {
-            background-color: #444;
-            color: #f0f0f0;
-            border: 1px solid #666;
-            padding: 6px 10px;
-            border-radius: 4px;
-        }
-        QPushButton:hover {
-            background-color: #555;
-            border: 1px solid #888;
-        }
-        QPushButton:pressed {
-            background-color: #222;
-            border: 1px solid #888;
-        }
-        QPushButton:disabled {
-            background-color: #333;
-            color: #777;
-            border: 1px solid #444;
+            /* QPushButton */
+            QPushButton {
+                background-color: #444;
+                color: #f0f0f0;
+                border: 1px solid #666;
+                padding: 6px 10px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #555;
+                border: 1px solid #888;
+            }
+            QPushButton:pressed {
+                background-color: #222;
+                border: 1px solid #888;
+            }
+            QPushButton:disabled {
+                background-color: #333;
+                color: #777;
+                border: 1px solid #444;
         }
         """
 
@@ -868,9 +640,6 @@ class View(QMainWindow):
     def remove_selected(self, widget):
         self.lst_wid.takeItem(widget)
 
-    # def load_folder_tree_into_ui(self, folder_tree_data_lst):
-    #     print("len --- ", len(folder_tree_data_lst))
-
 
 class TreeItemClickSignals(QObject):
     custom_context = Signal(list, str, str)
@@ -887,22 +656,6 @@ class TreeItemClickWorkerPool(QRunnable):
 
 
     def run(self):
-        # if self.thumbnil_wid_items_lst:
-        #     self.view.clear_lst_wid()
-        #     self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
-        #     self.view.add_thumbnil_wid(self.thumbnil_wid_items_lst)
-
-        #     self.signal_obj.custom_context.emit(
-        #         self.thumbnil_wid_items_lst,
-        #         self.thumb_dir_name,
-        #         self.msg)
-
-        # else:
-        #     self.view.clear_lst_wid()
-        #     self.view.set_lbl_thumbnil_path(self.thumb_dir_name)
-        #     self.view.show_notification(self.msg)
-
-
         self.signal_obj.custom_context.emit(
             self.thumbnil_wid_items_lst,
             self.thumb_dir_name,
@@ -951,6 +704,7 @@ class Controller(QObject):
         self.model.overwrite_config(new_extensions, selected_proj)
 
     def on_item_clicked(self, item, column):
+        # ==========================================================================================
         # This code is without threadpool
         thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)
 
@@ -966,9 +720,9 @@ class Controller(QObject):
             self.view.clear_lst_wid()
             self.view.set_lbl_thumbnil_path(thumb_dir_name)
             self.view.show_notification(msg)
+        # ==========================================================================================
 
-        # ---------------------------------------------------------------------------------------------
-       
+        # ---------------------------------------------------------------------------------------------     
         # This is with threadpool (UI is crushing when click on qtreewidgetitem)
 
         # thumbnil_wid_items_lst, thumb_dir_name, msg = self.model.get_thumbnil_wid_lst(item, column)      
@@ -978,6 +732,7 @@ class Controller(QObject):
 
         # thread_pool = QThreadPool.globalInstance()
         # thread_pool.start(tree_item_click_worker_pool)
+        # --------------------------------------------------------------------------------------------- 
 
     def thumbnail_context_action(self, thumbnil_wid_items_lst):
         for w in thumbnil_wid_items_lst:
@@ -1008,9 +763,6 @@ class Controller(QObject):
             self.action_clicked(self.action, pos)
 
     def action_clicked(self, invoked_action, pos):
-
-        print("invoked_action --- ", invoked_action.text())
-        # if invoked_action.text() in ["exr", 'jpg', 'mov', 'png']:
         if invoked_action.text() == "Load in Viewer":
             result, path = self.model.get_invoked_action_path(invoked_action)
             if result:
@@ -1064,9 +816,7 @@ class Controller(QObject):
             return True
 
         elif obj == self.view.tab_wid and event.type() == QEvent.MouseButtonPress:
-            # when user clicks, give it focus
             self.view.tab_wid.setFocus()
-
 
         return super().eventFilter(obj, event)
     
@@ -1142,16 +892,10 @@ class ThumbnilWidget(QWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenuRequested)
 
-    def populate_menu_actions(self, pos):
-        
+    def populate_menu_actions(self, pos):   
         self.menu = QMenu(self)
 
-
-
-
         self.menu.setStyleSheet("""
-
-
             /* ---------------- QMenu ---------------- */
             QMenu {
                 background-color: #333;
@@ -1201,17 +945,8 @@ class ThumbnilWidget(QWidget):
                 width: 14px;
                 height: 14px;
             }
-
-
         """)
  
-
-        # self.play_menu = self.menu.addMenu("Load in Viewer")
-        # self.exr_action = self.play_menu.addAction("exr")
-
-        # self.jpg_action = self.play_menu.addAction("jpg")
-        # self.mov_action = self.play_menu.addAction("mov")
-
         self.laod_action = self.menu.addAction("Load in Viewer")
 
         self.remove_action = self.menu.addAction("Remove")
@@ -1225,7 +960,6 @@ class ThumbnilWidget(QWidget):
         hlay = QHBoxLayout()
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
-        # scaled = pixmap.scaled(120, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         scaled = pixmap.scaled(120, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         lbl_full_path = QLabel()
@@ -1240,11 +974,8 @@ class ThumbnilWidget(QWidget):
         hlay.addWidget(lbl_full_path)
         hlay.addWidget(lbl_thumbnil)   
 
-        vlay1 = QVBoxLayout()
-        vlay1.setContentsMargins(2,0,0,0)
-
-        vlay2 = QVBoxLayout()
-        vlay3 = QVBoxLayout()
+        vlay = QVBoxLayout()
+        vlay.setContentsMargins(2,0,0,0)
 
         lbl_title = QLabel(f"  {self.img_data_dict['lbl_title']}  ")
         lbl_title.setStyleSheet("text-transform: uppercase;")
@@ -1276,33 +1007,11 @@ class ThumbnilWidget(QWidget):
         font.setPointSize(8)
         lbl_info.setFont(font)
 
-        # ------------------------------------------
-        # this is working layout
+        vlay.addWidget(lbl_title)
+        vlay.addWidget(lbl_info)
 
-        # vlay.addWidget(lbl_title)
-        # vlay.addWidget(lbl_info)
-
-        # hlay.addLayout(vlay)
-        # -----------------------------------------
-
-        # ==============================================
-        # this is new layout just checking
-        vlay2.addWidget(lbl_title)
-        vlay3.addWidget(lbl_info)
-        vlay1.addLayout(vlay2)
-        vlay1.addLayout(vlay3)
-        hlay.addLayout(vlay1)
-        # ==============================================
-
+        hlay.addLayout(vlay)
         self.mainhlay.addLayout(hlay)
-
-    # def set_style_sheet(self):
-    #     # background-color: #006bb3;
-    #     self.setStyleSheet("""
-    #             border: 3px grey;
-    #             background-color: #4d4d4d;
-                
-    #     """)
 
     def set_style_sheet(self):
         # background-color: #006bb3;
@@ -1318,23 +1027,13 @@ class ThumbnilWidget(QWidget):
 
 
     def set_thumb_background_color(self):
-        pass
         self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;") # ** this is important line **
-            # QLabel {
-            #     color: white;                
-            #     background-color: #4d4d4d;         
-            #     padding: 5px;               
-            #     border: 1px solid #444;
-            #     border-radius: 3px;
-            # }  
 
     def enterEvent(self, event):
-        # self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;")
         self.set_thumb_background_color()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        # self.setStyleSheet("background-color: #4d4d4d;")
         self.set_style_sheet()
         super().leaveEvent(event)
 
@@ -1351,34 +1050,17 @@ class Model():
     def __init__(self):
         self.thumbnil_widget = None
         self.drive = None
-        # self.json_path = CONFIG_FILEPATH
 
     def get_invoked_action_path(self, invoked_action):
-        # child_widgets = invoked_action.parentWidget().parentWidget().parentWidget().findChildren(QWidget)
-        
-        # if invoked_action.text() == "exr":
-        #     for child in child_widgets:
-        #         if isinstance(child, QLabel):
-        #             if child.text().startswith("Path"):
-        #                 path = child.text().split("Path-")[-1]
-        #                 return True, path
-        # else:
-        #     return False, None
-
-        # ---------------------------------------------------------------------------------------------------------
-
         child_widgets = invoked_action.parentWidget().parentWidget().findChildren(QWidget)
         
-
         for child in child_widgets:
             if isinstance(child, QLabel):
                 if child.text().startswith("Path"):
                     path = child.text().split("Path-")[-1]
                     return True, path
 
-
     def fetch_folder_tree_data(self, path):
-
         folder_tree_data = {
             "dir_name" : os.path.basename(path),
             "path" : path
@@ -1445,7 +1127,6 @@ class Model():
 
         return folder_tree_data_lst
 
-    # @Slot(QTreeWidgetItem, int) 
     def get_project_extension(self, proj_code):
         try:
             with open(CONFIG_FILEPATH, "r") as f:
@@ -1597,7 +1278,6 @@ class Model():
         with open(CONFIG_FILEPATH, 'r') as f:
             data = json.load(f)
 
-        # data[selected_proj]["extension"] = new_extensions
         for ext_item in data[selected_proj]["extension"].keys():
             if ext_item in new_extensions:
                 data[selected_proj]["extension"][ext_item] = True
