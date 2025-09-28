@@ -3,6 +3,13 @@ from pathlib import Path
 import os
 
 class Constant:
+    """
+    A container for application-wide constants such as default paths, 
+    configuration filenames, supported file extensions, and style resources.
+
+    These constants are designed to centralize shared values that remain fixed 
+    across the application, ensuring consistency and easier maintainability.
+    """ 
     DOCUMENTS_DIRPATH = user_documents_dir()
 
     APP_DIRNAME = ".app"

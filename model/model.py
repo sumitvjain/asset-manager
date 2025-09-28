@@ -4,23 +4,44 @@ import re
 import random
 from config import constant
 from PySide2.QtWidgets import QLabel, QTreeWidgetItem, QWidget
+from view import thumbnil_container
+
 # from Qt.QtWidgets import *
 # from Qt.QtGui import *
 # from Qt.QtCore import *
 # from Qt.QtMultimedia import *
-from view import thumbnil_container
 
 
 con = constant.Constant()
 
 
-
 class Model():
+    """
+    Model class responsible for handling core data operations such as:
+    - Fetching folder and file tree structures
+    - Extracting project configuration and supported extensions
+    - Building thumbnail metadata for supported files
+    - Basic file operations (open, save, undo, redo, etc.)
+    """
+
+
     def __init__(self):
+        """
+        Initialize the Model object with default values.
+        """
         self.thumbnil_widget = None
         self.drive = None
 
     def get_invoked_action_path(self, invoked_action):
+        """
+        Get the path text from the parent QLabel of an invoked QAction.
+
+        Args:
+            invoked_action: QAction object that triggered the event.
+
+        Returns:
+            tuple: (True, path) if path found, else None.
+        """
         child_widgets = invoked_action.parentWidget().parentWidget().findChildren(QWidget)
         
         for child in child_widgets:
@@ -30,6 +51,15 @@ class Model():
                     return True, path
 
     def fetch_folder_tree_data(self, path):
+        """
+        Recursively build a folder tree structure for the given directory.
+
+        Args:
+            path (str): Directory path.
+
+        Returns:
+            dict: Dictionary with folder structure containing subdirectories and files.
+        """
         folder_tree_data = {
             "dir_name" : os.path.basename(path),
             "path" : path
@@ -54,7 +84,15 @@ class Model():
         return folder_tree_data
 
     def get_urls_data(self, drop_urls):
+        """
+        Process dropped URLs and generate folder tree data for directories.
 
+        Args:
+            drop_urls (list): List of QUrls dropped into the application.
+
+        Returns:
+            list: List of folder tree data dictionaries.
+        """
         folder_tree_data_lst = []
         for url in drop_urls:
             url_path = url.toLocalFile() 
@@ -97,6 +135,15 @@ class Model():
         return folder_tree_data_lst
 
     def get_project_extension(self, proj_code):
+        """
+        Fetch all extensions configured for a given project.
+
+        Args:
+            proj_code (str): Project code.
+
+        Returns:
+            list: List of supported extensions for the project.
+        """
         try:
             with open(con.CONFIG_FILEPATH, "r") as f:
                 data = json.load(f)
@@ -112,6 +159,15 @@ class Model():
             return []
 
     def fetch_project_extensions(self, selected_proj):
+        """
+        Fetch only enabled extensions for a given project.
+
+        Args:
+            selected_proj (str): Project code.
+
+        Returns:
+            list: List of enabled extension strings.
+        """
         with open(con.CONFIG_FILEPATH, "r") as rd:
             config_data = json.load(rd)
 
@@ -127,7 +183,16 @@ class Model():
 
 
     def get_thumbnil_wid_lst(self, item: QTreeWidgetItem, column: int):
+        """
+        Build a list of thumbnail widgets for files in the selected directory.
 
+        Args:
+            item (QTreeWidgetItem): The tree item selected.
+            column (int): Column index (unused but required by Qt signal/slot).
+
+        Returns:
+            tuple: (list of thumbnail widgets, directory path, status message)
+        """
         parts = []
         it = item
   
@@ -188,6 +253,16 @@ class Model():
             return [], self.thumbnil_dir_path, msg
          
     def get_thumb_data_dict(self, file_name, is_thumb_dir=None):
+        """
+        Generate metadata dictionary for a thumbnail image.
+
+        Args:
+            file_name (str): Name of the file.
+            is_thumb_dir (bool): Whether file is inside a directory.
+
+        Returns:
+            dict: Metadata including title, full path, frame range, project and shot code.
+        """
         thumbnil_data_dict = {}
         
         if is_thumb_dir:
@@ -244,6 +319,16 @@ class Model():
             return []        
 
     def overwrite_config(self, new_extensions, selected_proj):
+        """
+        Overwrite project extension configuration.
+
+        Args:
+            new_extensions (list): List of enabled extensions.
+            selected_proj (str): Project code to update.
+
+        Returns:
+            None
+        """
         with open(con.CONFIG_FILEPATH, 'r') as f:
             data = json.load(f)
 

@@ -1,30 +1,13 @@
 from PySide2.QtWidgets import (
-    QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
     QWidget, 
     QVBoxLayout, 
     QHBoxLayout, 
-    QApplication, 
-    QAction,
-    QListWidget,
-    QListWidgetItem,
-    QTreeWidgetItem,
-    QTreeWidget,
     QLabel,
-    QPushButton,
-    QTabWidget,
-    QSplitter,
-    QScrollArea,
-    QGridLayout,
-    QSizePolicy,
     QMenu,
-    QMessageBox,  
-    QStyle,
-    QDialog,
-    QComboBox
 )
 from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
 from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool, QRunnable
-from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
+
 
 # from Qt.QtWidgets import *
 # from Qt.QtGui import *
@@ -32,14 +15,29 @@ from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 # from Qt.QtMultimedia import *
 
 
-from  pprint import pprint
-import sys, os
-import random
-import json
-
-
 
 class ThumbnilWidget(QWidget):
+    """
+    A custom QWidget for displaying an image thumbnail with support 
+    for a context menu.
+
+    Features
+    --------
+    - Displays an image thumbnail with project/shot metadata.
+    - Provides custom hover and click visual feedback.
+    - Supports context menu actions (Load, Remove, Compare).
+    - Customizable stylesheet for consistent look.
+
+    Attributes
+    ----------
+    contextMenuRequested : Signal(QPoint)
+        Custom signal emitted when a context menu is requested (e.g., right-click).
+    img_data_dict : dict
+        Dictionary containing image data (metadata or image reference).
+    mainhlay : QHBoxLayout
+        The main horizontal layout used to arrange child widgets.
+    """
+
     contextMenuRequested = Signal(QPoint)
 
     def __init__(self, img_data_dict):
@@ -58,6 +56,15 @@ class ThumbnilWidget(QWidget):
         self.customContextMenuRequested.connect(self.contextMenuRequested)
 
     def populate_menu_actions(self, pos):   
+        """
+        Create and style the context menu with actions.
+
+        Parameters
+        ----------
+        pos : QPoint
+            The position where the context menu should be shown.
+        """
+
         self.menu = QMenu(self)
 
         self.menu.setStyleSheet("""
@@ -122,6 +129,10 @@ class ThumbnilWidget(QWidget):
         print("EXR clicked")
 
     def add_widgets(self):
+        """
+        Add UI elements (thumbnail, labels, metadata) to the widget layout.
+        """
+
         hlay = QHBoxLayout()
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
@@ -195,14 +206,26 @@ class ThumbnilWidget(QWidget):
         self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;") # ** this is important line **
 
     def enterEvent(self, event):
+        """
+        Qt event: Triggered when mouse enters the widget area.
+        Changes background to highlight state.
+        """
         self.set_thumb_background_color()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """
+        Qt event: Triggered when mouse leaves the widget area.
+        Restores default background style.
+        """
         self.set_style_sheet()
         super().leaveEvent(event)
 
     def mousePressEvent(self, event):
+        """
+        Qt event: Triggered when the widget is clicked.
+        Applies highlight background.
+        """
         self.set_thumb_background_color()
         return super().mousePressEvent(event)
     

@@ -1,5 +1,5 @@
 from PySide2.QtWidgets import (
-    QMainWindow, QSizePolicy, QSpacerItem, QAbstractItemView,
+    QMainWindow, 
     QWidget, 
     QVBoxLayout, 
     QHBoxLayout, 
@@ -14,9 +14,6 @@ from PySide2.QtWidgets import (
     QTabWidget,
     QSplitter,
     QScrollArea,
-    QGridLayout,
-    QSizePolicy,
-    QMenu,
     QMessageBox,  
     QStyle,
     QDialog,
@@ -31,20 +28,29 @@ from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
 # from Qt.QtCore import *
 # from Qt.QtMultimedia import *
 
-from  pprint import pprint
-import sys, os
-import random
-import json
+import os
 
 from platformdirs import user_documents_dir
 from pathlib import Path
-import re
 from config import constant
 
 con = constant.Constant()
 
 
 class PreferencesDialog(QDialog):
+    """
+    A preferences dialog allowing the user to configure project-specific
+    file extensions and settings.
+
+    Attributes:
+        existing_prefs_data (dict): Dictionary containing existing preferences.
+        config_file_path (Path): Path to the configuration file.
+        proj_combo (QComboBox): Dropdown for selecting a project.
+        lst_wid (QListWidget): List of extensions with checkboxes.
+        info_lbl (QLabel): Label for displaying info messages.
+        close_btn (QPushButton): Button to close the dialog.
+        update_btn (QPushButton): Button to save/update preferences.
+    """
     def __init__(self, existing_prefs_data, parent=None, ):
         super().__init__(parent)
         self.existing_prefs_data = existing_prefs_data
@@ -58,6 +64,7 @@ class PreferencesDialog(QDialog):
 
 
     def add_widgets(self):
+        """Create and add all widgets (labels, combobox, buttons) to the dialog."""
         hbox_lay_01 = QHBoxLayout()     
         proj_lbl = QLabel("Project:")
         self.proj_combo = QComboBox()      
@@ -91,6 +98,12 @@ class PreferencesDialog(QDialog):
         self.dialog_vlay.addLayout(btn_hlay)
 
     def set_extension_lst(self, supported_ext_lst):
+        """
+        Populate the extension list for the currently selected project.
+
+        Args:
+            supported_ext_lst (list[str]): List of supported file extensions.
+        """
         selected_proj = self.get_current_project_code()
         if selected_proj != '-- Select Project --':
             self.lst_wid.clear()
@@ -113,6 +126,7 @@ class PreferencesDialog(QDialog):
         self.toggle_button_state()
 
     def get_checked_extension(self):
+        """Return a list of all extensions"""
         self.checked_item_nm_lst = []
         for item_index in range(self.lst_wid.count()):
             lst_item = self.lst_wid.item(item_index)
@@ -122,6 +136,7 @@ class PreferencesDialog(QDialog):
         return self.checked_item_nm_lst
 
     def toggle_button_state(self):
+        """Return a list of all extensions."""
         if self.proj_combo.currentText()  == '-- Select Project --':
             self.update_btn.setEnabled(False)
         else:
@@ -132,6 +147,13 @@ class PreferencesDialog(QDialog):
 
 
 class TreeWidgetWorker(QObject):
+    """
+    Worker for processing folder tree data in a separate thread.
+
+    Signals:
+        tree_data_ready (str, dict): Emitted when a tree item is ready.
+        finished: Emitted when processing is complete.
+    """
     tree_data_ready = Signal(str, dict)
     finished = Signal()
 
@@ -140,6 +162,7 @@ class TreeWidgetWorker(QObject):
         self.folder_tree_data_lst = folder_tree_data_lst
 
     def run(self):
+        """Process folder tree data and emit signals for each item."""
         for dict_itm in self.folder_tree_data_lst:
             base_nm = list(dict_itm.keys())[0]
             path = dict_itm[base_nm]["path"]
@@ -149,6 +172,12 @@ class TreeWidgetWorker(QObject):
 
 
 class TreeWidget(QTreeWidget):  
+    """
+    Custom QTreeWidget for displaying folder/file hierarchies.
+
+    Signals:
+        filesDropped (list): Emitted when files are dropped onto the widget.
+    """
     filesDropped = Signal(list)
     
     def __init__(self):
@@ -171,18 +200,21 @@ class TreeWidget(QTreeWidget):
         """)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
+        """Allow drag enter if the data contains URLs."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             event.ignore()
     
     def dragMoveEvent(self, e:QDragMoveEvent):
+        """Allow drag move if the data contains URLs."""
         if e.mimeData().hasUrls():
             e.acceptProposedAction()
         else:
             e.ignore()
 
     def dropEvent(self, event):
+        """Handle file drop and emit signal with dropped URLs."""
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
             self.filesDropped.emit(drop_urls)
@@ -191,7 +223,7 @@ class TreeWidget(QTreeWidget):
             event.ignore()
 
     def enterEvent(self, event):
-        """When mouse enters widget"""
+        """Change style when mouse enters the widget."""
         # #8c8c8c;
         self.setStyleSheet("""
             QTreeWidget::item {
@@ -224,7 +256,8 @@ class TreeWidget(QTreeWidget):
     def tree_wid_itm_processed(self, tree_item):
         self.addTopLevelItem(tree_item)
 
-    def build_tree_view(self, path, tree_item):     
+    def build_tree_view(self, path, tree_item):  
+        """Recursively build a tree view from the filesystem path."""   
         dir_contents = os.listdir(path)
 
         for item in sorted(dir_contents):
@@ -241,6 +274,7 @@ class TreeWidget(QTreeWidget):
 
 
     def process_tree_data(self, base_nm, data):
+        """Add tree items for a given folder structure."""
         path = data["path"]
         tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
         self.addTopLevelItem(tree_item)
@@ -249,6 +283,12 @@ class TreeWidget(QTreeWidget):
 
 
     def load_folder_tree_into_ui(self, folder_tree_data_lst):
+        """
+        Load folder tree data into the widget using a QThread.
+
+        Args:
+            folder_tree_data_lst (list): List of dicts with folder info.
+        """
         # ---------------------------------------------------------------------
         # This code with qthread
 
@@ -285,11 +325,20 @@ class TreeWidget(QTreeWidget):
 
 
 class TreeItemClickSignals(QObject):
+    """Signals for TreeItemClickWorkerPool."""
     custom_context = Signal(list, str, str)
     completed = Signal()
 
 
 class TreeItemClickWorkerPool(QRunnable):
+    """
+    Worker pool task for processing thumbnail widget items.
+
+    Attributes:
+        thumbnil_wid_items_lst (list): List of thumbnail widget items.
+        thumb_dir_name (str): Directory name for thumbnails.
+        msg (str): Message related to the operation.
+    """
     def __init__(self, thumbnil_wid_items_lst, thumb_dir_name, msg):
         super().__init__()
         self.thumbnil_wid_items_lst = thumbnil_wid_items_lst
@@ -308,6 +357,14 @@ class TreeItemClickWorkerPool(QRunnable):
 
 
 class View(QMainWindow):
+    """
+    Main application window for Asset Manager.
+
+    Attributes:
+        tree_wid (TreeWidget): Left-side tree for file navigation.
+        lst_wid (QListWidget): Center list for thumbnails.
+        tab_wid (QTabWidget): Right-side tab for viewer and metadata.
+    """
     def __init__(self, app):
         super().__init__()
         self.setWindowTitle("Asset Manager")
@@ -351,6 +408,7 @@ class View(QMainWindow):
         """)
 
     def set_geometry(self, app):
+        """Maximize window to full screen size."""
         screen = app.primaryScreen().geometry()
         width = screen.width()
         height = screen.height()
@@ -419,6 +477,7 @@ class View(QMainWindow):
         """)  
 
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
+        """Add a list of thumbnail widgets to the list view."""
 
         for widget in thumbnil_wid_items_lst:
             print("widget ==== ", widget)
@@ -434,6 +493,7 @@ class View(QMainWindow):
 
 
     def add_menu(self):
+        """Create menubar and menus (File, Edit, Preferences)."""
         menu = self.menuBar()
 
         # File menu
@@ -471,10 +531,12 @@ class View(QMainWindow):
         preferences_menu.addAction(self.preferences_action)
 
     def add_tree_wid(self):
+        """Add the tree widget to the splitter."""
         self.tree_wid = TreeWidget()
         self.splitter.addWidget(self.tree_wid)
 
     def add_lst_wid(self):
+        """Add the thumbnail list widget to the splitter."""
         lst_widget = QWidget()
         lst_vlay = QVBoxLayout(lst_widget)
         lst_vlay.setContentsMargins(1,1,1,1)
@@ -505,12 +567,14 @@ class View(QMainWindow):
         self.splitter.addWidget(lst_widget)
         
     def set_lbl_thumbnil_path(self, text):
+        """Set the label text for the current thumbnail directory path."""
         self.lbl_thumb_path.setText(f"Thumbnil Directory Path:\n{text}")
         font = QFont()
         font.setFamilies("Verdana")
         self.lbl_thumb_path.setFont(font)
 
     def add_viewer_wid(self):
+        """Add the viewer widget with tabs for render preview and metadata."""
         self.viewer_wid = QWidget()
 
         right_vlay = QVBoxLayout(self.viewer_wid)
@@ -530,6 +594,7 @@ class View(QMainWindow):
         self.splitter.addWidget(self.viewer_wid)
 
     def create_viewer_tab(self, meta=None):
+        """Create a tab for either viewer or metadata."""
         tab_view_wid = QWidget()
         tab_view_vlay_1 = QVBoxLayout()
         if meta is None:
@@ -539,6 +604,7 @@ class View(QMainWindow):
         return tab_view_wid
 
     def load_render_in_viewer(self, path):
+        """Load an image render into the viewer tab."""
         current_tab = self.tab_wid.currentWidget()
         label = current_tab.findChild(QLabel)
 
