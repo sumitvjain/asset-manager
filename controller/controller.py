@@ -1,4 +1,6 @@
-from PySide2.QtCore import Qt, QEvent, QObject
+# from PySide2.QtCore import Qt, QEvent, QObject
+
+from qt_lib.qt_compact import *
 
 # from Qt.QtWidgets import *
 # from Qt.QtGui import *

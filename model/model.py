@@ -3,7 +3,8 @@ import json
 import re
 import random
 from config import constant
-from PySide2.QtWidgets import QLabel, QTreeWidgetItem, QWidget
+# from PySide2.QtWidgets import QLabel, QTreeWidgetItem, QWidget
+from qt_lib.qt_compact import *
 from view import thumbnil_container
 
 # from Qt.QtWidgets import *
@@ -175,6 +176,10 @@ class Model():
         raw_ext_dict = config_data[selected_proj]['extension']
         supported_ext_lst = []
 
+
+        print("raw_ext_dict type --- ", type(raw_ext_dict))
+        print("raw_ext_dict ---- ", raw_ext_dict)
+        
         for ext_key in raw_ext_dict.keys():
             if raw_ext_dict[ext_key] == True:
                 supported_ext_lst.append(ext_key)
