@@ -25,4 +25,3 @@ if __name__ == "__main__":
     controller = controller.Controller(model, view)
     view.show()
     sys.exit(app.exec_())
-
