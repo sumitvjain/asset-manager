@@ -1,4 +1,5 @@
-from PySide2.QtWidgets import QApplication
+# from PySide2.QtWidgets import QApplication
+from qt_lib.qt_compact import *
 
 # from Qt.QtWidgets import *
 # from Qt.QtGui import *
@@ -12,15 +13,16 @@ from view import view
 from model import model
 from controller import controller
 
-con = constant.Constant()
+# con = constant.Constant()
 
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # app.setStyleSheet(open(STYLE_QSSPATH, "r").read())
-    model = model.Model()
+    
     view = view.View(app)
+    model = model.Model()   
     settings.setup_config()
     controller = controller.Controller(model, view)
     view.show()
