@@ -1,43 +1,8 @@
-# from PySide2.QtWidgets import (
-#     QMainWindow, 
-#     QWidget, 
-#     QVBoxLayout, 
-#     QHBoxLayout, 
-#     QApplication, 
-#     QAction,
-#     QListWidget,
-#     QListWidgetItem,
-#     QTreeWidgetItem,
-#     QTreeWidget,
-#     QLabel,
-#     QPushButton,
-#     QTabWidget,
-#     QSplitter,
-#     QScrollArea,
-#     QMessageBox,  
-#     QStyle,
-#     QDialog,
-#     QComboBox
-# )
-# from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
-# from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool, QRunnable
-# from PySide2.QtMultimedia import QMediaPlayer, QMediaContent
-
-# from qt_lib.qt_compact import *
 from qt_lib.qt_compact import *
-
-
-
-# from Qt.QtWidgets import *
-# from Qt.QtGui import *
-# from Qt.QtCore import *
-# from Qt.QtMultimedia import *
+from config import constant
+from pathlib import Path
 
 import os
-
-from platformdirs import user_documents_dir
-from pathlib import Path
-from config import constant
 
 con = constant.Constant()
 

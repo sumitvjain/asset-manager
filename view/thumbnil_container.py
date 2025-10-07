@@ -1,19 +1,4 @@
-# from PySide2.QtWidgets import (
-#     QWidget, 
-#     QVBoxLayout, 
-#     QHBoxLayout, 
-#     QLabel,
-#     QMenu,
-# )
-# from PySide2.QtGui import QDragEnterEvent, QDragMoveEvent, QPixmap, QFont, QWheelEvent, QIcon
-# from PySide2.QtCore import Qt, QUrl, Slot, Signal, QPoint, QEvent, QObject, QSize, QThread, QThreadPool, QRunnable
-
 from qt_lib.qt_compact import *
-
-# from Qt.QtWidgets import *
-# from Qt.QtGui import *
-# from Qt.QtCore import *
-# from Qt.QtMultimedia import *
 
 
 

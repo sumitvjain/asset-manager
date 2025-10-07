@@ -3,15 +3,8 @@ import json
 import re
 import random
 from config import constant
-# from PySide2.QtWidgets import QLabel, QTreeWidgetItem, QWidget
 from qt_lib.qt_compact import *
 from view import thumbnil_container
-
-# from Qt.QtWidgets import *
-# from Qt.QtGui import *
-# from Qt.QtCore import *
-# from Qt.QtMultimedia import *
-
 
 con = constant.Constant()
 
