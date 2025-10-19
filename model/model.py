@@ -42,7 +42,12 @@ class Model():
             if isinstance(child, QLabel):
                 if child.text().startswith("Path"):
                     path = child.text().split("Path-")[-1]
-                    return True, path
+                    
+                    ####################################################
+                    # return True, path
+                    normalized = path.replace("\\", "/")
+                    return True, normalized
+                    ####################################################
 
     def fetch_folder_tree_data(self, path):
         """

@@ -1,6 +1,7 @@
 from qt_lib.qt_compact import *
 
 
+
 class Controller(QObject):
     """
     Controller class acts as a mediator between the Model and View.
@@ -11,7 +12,7 @@ class Controller(QObject):
     - Controls project preferences and configuration updates.
     """
 
-    def __init__(self, model, view):
+    def __init__(self, model, view, nuke_operation):
 
         """
         Initialize Controller.
@@ -24,6 +25,7 @@ class Controller(QObject):
         super().__init__()
         self.model = model
         self.view = view
+        self.nuke_operation = nuke_operation
         self.zoom_factor = 1.0
         self.signal_slot()
         self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
@@ -176,10 +178,14 @@ class Controller(QObject):
         """
         if invoked_action.text() == "Load in Viewer":
             result, path = self.model.get_invoked_action_path(invoked_action)
+            print("result --- ", result)
+            print("path --- ", path)
             if result:
                 self.view.load_render_in_viewer(path)
                 self.update_image_size()
-                self.view.show_notification("Successfully loaded into viewer.")
+                # self.view.show_notification("Successfully loaded into viewer.")
+                # Need to add code here for meta data login(calling from here)
+                meta_data_dict = self.nuke_operation.get_meta_data(path)
             else:
                 self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
 
