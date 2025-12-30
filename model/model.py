@@ -345,3 +345,24 @@ class Model():
         with open(con.CONFIG_FILEPATH, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Updated extensions for {selected_proj}: {new_extensions}")
+
+    # def get_meta(self, path):
+    #     # print("*****"*10)
+    #     # print("working in get meta function")
+    #     # print("*****"*10)
+    #     proc = subprocess.Popen(
+    #         [str(con.NUKE_EXE), "-t", str(con.NUKE_OP_PATH), str(path)],
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #         text=True
+    #     )
+
+    #     stdout, stderr = proc.communicate()
+        
+    #     print("RETURN CODE:", proc.returncode)
+    #     print("STDOUT:\n", stdout)
+    #     print("STDERR:\n", stderr)
+
+    def get_meta(self, path):
+        pass
+   

@@ -1,5 +1,9 @@
 from qt_lib.qt_compact import *
 
+# from config import constant
+
+# con = constant.Constant()
+
 
 
 class Controller(QObject):
@@ -168,6 +172,21 @@ class Controller(QObject):
         if self.action:
             self.action_clicked(self.action, pos)
 
+    # def get_meta(self, path):
+    #     proc = subprocess.Popen(
+    #         [str(con.NUKE_EXE), "-t", str(con.NUKE_OP_PATH), str(path)],
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #         text=True
+    #     )
+
+    #     stdout, stderr = proc.communicate()
+        
+    #     print("RETURN CODE:", proc.returncode)
+    #     print("STDOUT:\n", stdout)
+    #     print("STDERR:\n", stderr)
+
+
     def action_clicked(self, invoked_action, pos):
         """
         Handle action clicked from thumbnail context menu.
@@ -185,7 +204,14 @@ class Controller(QObject):
                 self.update_image_size()
                 # self.view.show_notification("Successfully loaded into viewer.")
                 # Need to add code here for meta data login(calling from here)
-                meta_data_dict = self.nuke_operation.get_meta_data(path)
+                # meta_data_dict = self.nuke_operation.get_meta_data(path) temporary off
+                self.model.get_meta(path)
+
+                print("*************** meta_data_dict ***************")
+                # from pprint import pprint
+                # pprint(meta_data_dict)
+
+
             else:
                 self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
 
