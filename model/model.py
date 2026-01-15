@@ -6,6 +6,7 @@ from config import constant
 from qt_lib.qt_compact import *
 from view import thumbnil_container
 
+
 con = constant.Constant()
 
 
@@ -363,6 +364,8 @@ class Model():
     #     print("STDOUT:\n", stdout)
     #     print("STDERR:\n", stderr)
 
-    def get_meta(self, path):
-        pass
+    
+
+   
+
    

@@ -25,6 +25,8 @@ class ThumbnilWidget(QWidget):
     """
 
     contextMenuRequested = Signal(QPoint)
+    doubleClicked = Signal(dict)
+
 
     def __init__(self, img_data_dict):
         super().__init__()
@@ -108,7 +110,7 @@ class ThumbnilWidget(QWidget):
         self.laod_action = self.menu.addAction("Load in Viewer")
 
         self.remove_action = self.menu.addAction("Remove")
-        self.compare_action = self.menu.addAction("Compare")
+        # self.compare_action = self.menu.addAction("Compare")
         self.set_thumb_background_color()
 
     def load_in_viewer(self):
@@ -122,7 +124,8 @@ class ThumbnilWidget(QWidget):
         hlay = QHBoxLayout()
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
-        scaled = pixmap.scaled(120, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        # scaled = pixmap.scaled(120, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        scaled = pixmap.scaled(65, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         lbl_full_path = QLabel()
         lbl_full_path.setText(f"Path-{image_full_path}")
@@ -131,7 +134,7 @@ class ThumbnilWidget(QWidget):
         lbl_thumbnil = QLabel()
         lbl_thumbnil.setPixmap(scaled)
         lbl_thumbnil.setAlignment(Qt.AlignCenter)
-        lbl_thumbnil.setFixedWidth(50)
+        lbl_thumbnil.setFixedWidth(90)
 
         hlay.addWidget(lbl_full_path)
         hlay.addWidget(lbl_thumbnil)   
@@ -155,11 +158,11 @@ class ThumbnilWidget(QWidget):
             Frame range - {first_frame} - {last_frame}  
         """
         )
-
+        # 4d4d4d
         self.setStyleSheet("""
             QLabel {
                 color: white;                
-                background-color: #4d4d4d;         
+                background-color: #333333;         
                 padding: 5px;               
                 border: 1px solid #444;
                 border-radius: 3px;
@@ -177,11 +180,12 @@ class ThumbnilWidget(QWidget):
 
     def set_style_sheet(self):
         # background-color: #006bb3;
+        # 4d4d4d
         self.setStyleSheet("""
             QLabel {
                 color: white;                
-                background-color: #4d4d4d;         
-                padding: 5px;               
+                background-color: #333333;         
+                padding: 5px;               s
                 border: 1px solid #444;
                 border-radius: 3px;
             }       
@@ -189,7 +193,7 @@ class ThumbnilWidget(QWidget):
 
 
     def set_thumb_background_color(self):
-        self.setStyleSheet("background-color: #B0C4DE; border: 1px solid #ccc; padding: 1px;") # ** this is important line **
+        self.setStyleSheet("background-color: #778899; border: 1px solid #ccc; padding: 1px;") # ** this is important line **
 
     def enterEvent(self, event):
         """
@@ -218,3 +222,12 @@ class ThumbnilWidget(QWidget):
     # def mouseReleaseEvent(self, event):
     #     self.set_thumb_background_color()
     #     return super().mouseReleaseEvent(event)
+
+    def mouseDoubleClickEvent(self, event):
+        
+        if event.button() == Qt.LeftButton:
+            self.doubleClicked.emit(self.img_data_dict)
+            # print("mouseDoubleClickEvent ---- ", self.doubleClicked, event)
+        super().mouseDoubleClickEvent(event)
+
+

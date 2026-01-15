@@ -1,8 +1,11 @@
 from qt_lib.qt_compact import *
 
+
 # from config import constant
 
 # con = constant.Constant()
+
+
 
 
 
@@ -34,6 +37,8 @@ class Controller(QObject):
         self.signal_slot()
         self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
         self.view.tab_wid.installEventFilter(self)
+        
+
 
     def signal_slot(self):   
         """
@@ -46,17 +51,36 @@ class Controller(QObject):
         self.view.save_action.triggered.connect(self.save_file)
         self.view.save_as_action.triggered.connect(self.save_as_file)
 
-        # Edit menu actions
-        self.view.undo_action.triggered.connect(self.undo_last_action)
-        self.view.redo_action.triggered.connect(self.redo_last_action)
-        self.view.cut_action.triggered.connect(self.cut_selected_item)
-        self.view.copy_action.triggered.connect(self.copy_selected_item)
-        self.view.paste_action.triggered.connect(self.paste_item)
+        # # Edit menu actions
+        # self.view.undo_action.triggered.connect(self.undo_last_action)
+        # self.view.redo_action.triggered.connect(self.redo_last_action)
+        # self.view.cut_action.triggered.connect(self.cut_selected_item)
+        # self.view.copy_action.triggered.connect(self.copy_selected_item)
+        # self.view.paste_action.triggered.connect(self.paste_item)
+
+        # Preference menu actions
         self.view.preferences_action.triggered.connect(self.preferences_clicked)
+
+        # Theme Switcher menu action
+        self.view.dark_teal_action.triggered.connect(
+            lambda: self.view.set_material_theme('dark_teal.xml'))
+        self.view.dark_blue_action.triggered.connect(
+            lambda: self.view.set_material_theme('dark_blue.xml'))
+        self.view.light_blue_action.triggered.connect(
+            lambda: self.view.set_material_theme('light_blue.xml'))
+        self.view.light_red_action.triggered.connect(
+            lambda: self.view.set_material_theme('light_red.xml'))
+        self.view.dark_purple_action.triggered.connect(
+            lambda: self.view.set_material_theme('dark_purple.xml'))
+
+
+        # Default theme (qdarkstyle)
+        self.view.qdarkstyle_action.triggered.connect(self.view.set_qdarkstyle_theme)
 
         # Tree widget actions
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
         self.view.tree_wid.filesDropped.connect(self.on_files_dropped)
+
 
     def proj_combo_index_changed(self):
         """
@@ -79,6 +103,14 @@ class Controller(QObject):
         selected_proj = self.prefs_window.proj_combo.currentText() 
         self.model.overwrite_config(new_extensions, selected_proj)
 
+
+    def on_lst_wid_double_clicked(self, img_data_dict):
+        # print('img_data_dict --- ', img_data_dict)
+        path = img_data_dict["image_full_path"]
+        
+        self.view.load_render_in_viewer(path)
+        self.update_image_size()
+
     def on_item_clicked(self, item, column):
         """
         Triggered when a tree widget item is clicked.
@@ -98,7 +130,10 @@ class Controller(QObject):
             self.view.add_thumbnil_wid(thumbnil_wid_items_lst)
 
             for w in thumbnil_wid_items_lst:
-                w.customContextMenuRequested.connect(lambda pos, widget=w: self.handle_context_menu(widget, pos))
+                w.customContextMenuRequested.connect(
+                    lambda pos, widget=w: self.handle_context_menu(widget, pos)
+                    )
+                w.doubleClicked.connect(self.on_lst_wid_double_clicked)
 
         else:
             self.view.clear_lst_wid()
@@ -202,10 +237,11 @@ class Controller(QObject):
             if result:
                 self.view.load_render_in_viewer(path)
                 self.update_image_size()
+
                 # self.view.show_notification("Successfully loaded into viewer.")
                 # Need to add code here for meta data login(calling from here)
                 # meta_data_dict = self.nuke_operation.get_meta_data(path) temporary off
-                self.model.get_meta(path)
+                # self.model.get_meta(path)
 
                 print("*************** meta_data_dict ***************")
                 # from pprint import pprint
@@ -284,7 +320,36 @@ class Controller(QObject):
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation
             )
-            self.view.tab_view_lbl.setPixmap(scaled_pixmap)
+            # print('scaled_pixmap height ---- ', scaled_pixmap.height())
+            # print('scaled_pixmap width ---- ', scaled_pixmap.width())
+            # scaled_pixmap height ----  427
+            # scaled_pixmap width ----  763
+            # scaled_pixmap height ----  633
+            # scaled_pixmap width ----  1017
+
+
+            max_height = 428
+            max_width = 764
+
+            if scaled_pixmap.height() <= max_height and scaled_pixmap.width() <= max_width:
+                self.view.tab_view_lbl.setPixmap(scaled_pixmap)
+            else:
+                # Re-scale to fit within max bounds
+                fitted_pixmap = scaled_pixmap.scaled(
+                    max_width - 1,
+                    max_height - 1,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.view.tab_view_lbl.setPixmap(fitted_pixmap)
+
+
+
+                # print('---'*25)
+                # print('image size is not match ')
+                # print('scaled_pixmap height ---- ', scaled_pixmap.height())
+                # print('scaled_pixmap width ---- ', scaled_pixmap.width())
+                # print('---'*25)
 
     # ---------------- Menu Actions (File/Edit) ---------------- #
     def open_file(self):
@@ -334,3 +399,10 @@ class Controller(QObject):
         self.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
         self.prefs_window.update_btn.clicked.connect(self.update_btn_clicked) 
         self.prefs_window.close_btn.clicked.connect(self.prefs_window.close)
+
+
+
+
+
+
+
