@@ -110,11 +110,7 @@ class ThumbnilWidget(QWidget):
         self.laod_action = self.menu.addAction("Load in Viewer")
 
         self.remove_action = self.menu.addAction("Remove")
-        # self.compare_action = self.menu.addAction("Compare")
         self.set_thumb_background_color()
-
-    def load_in_viewer(self):
-        print("EXR clicked")
 
     def add_widgets(self):
         """
@@ -124,7 +120,6 @@ class ThumbnilWidget(QWidget):
         hlay = QHBoxLayout()
         image_full_path = self.img_data_dict['image_full_path']
         pixmap = QPixmap(image_full_path)
-        # scaled = pixmap.scaled(120, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         scaled = pixmap.scaled(65, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         lbl_full_path = QLabel()
@@ -158,7 +153,7 @@ class ThumbnilWidget(QWidget):
             Frame range - {first_frame} - {last_frame}  
         """
         )
-        # 4d4d4d
+
         self.setStyleSheet("""
             QLabel {
                 color: white;                
@@ -179,8 +174,6 @@ class ThumbnilWidget(QWidget):
         self.mainhlay.addLayout(hlay)
 
     def set_style_sheet(self):
-        # background-color: #006bb3;
-        # 4d4d4d
         self.setStyleSheet("""
             QLabel {
                 color: white;                
@@ -218,16 +211,11 @@ class ThumbnilWidget(QWidget):
         """
         self.set_thumb_background_color()
         return super().mousePressEvent(event)
-    
-    # def mouseReleaseEvent(self, event):
-    #     self.set_thumb_background_color()
-    #     return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event):
         
         if event.button() == Qt.LeftButton:
             self.doubleClicked.emit(self.img_data_dict)
-            # print("mouseDoubleClickEvent ---- ", self.doubleClicked, event)
         super().mouseDoubleClickEvent(event)
 
 

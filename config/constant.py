@@ -18,7 +18,6 @@ class Constant:
     DEFAULT_ENABLED_EXTS = {"jpeg", "jpg"}
     CONFIG_FILEPATH = Path(DOCUMENTS_DIRPATH) / APP_DIRNAME / CONFIG_FILENAME
     STYLE_QSSPATH =   Path(os.path.dirname(__file__)) / "style.qss" 
-    NUKE_EXE = r"C:\Program Files\Nuke13.2v4\Nuke13.2.exe"
-    NUKE_OP_PATH = Path(os.path.dirname(os.path.dirname(__file__))) / "model" / "nuke_operation.py"
+
 
 

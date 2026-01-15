@@ -85,7 +85,7 @@ class PreferencesDialog(QDialog):
             for ext in con.AVAILABLE_EXTENSIONS:
                 item = QListWidgetItem(ext)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                # if ext in proj_ext_lst:
+
                 if ext in supported_ext_lst:
                     item.setCheckState(Qt.Checked)
                 else:
@@ -160,17 +160,6 @@ class TreeWidget(QTreeWidget):
         self.setHeaderHidden(True)
         self.setAcceptDrops(True)
 
-        # self.setStyleSheet("""
-        #     /* QTreeWidget general styling */
-        #     QTreeWidget {
-        #         background-color: #2b2b2b;
-        #         border: 1px solid #444;
-        #         color: #eeeeee;
-        #         font: 12px "Segoe UI";
-        #         show-decoration-selected: 1;
-        #     }
-
-        # """)
 
     def dragEnterEvent(self, event:QDragEnterEvent):
         """Allow drag enter if the data contains URLs."""
@@ -191,39 +180,11 @@ class TreeWidget(QTreeWidget):
         if event.mimeData().hasUrls():
             drop_urls = event.mimeData().urls()
             self.filesDropped.emit(drop_urls)
-            # event.accept() 
         else:
             event.ignore()
 
     def enterEvent(self, event):
-        # """Change style when mouse enters the widget."""
-        # # #8c8c8c;
-        # self.setStyleSheet("""
-        #     QTreeWidget::item {
-        #         background-color: #4d4d4d;
-        #     }
-        #     QTreeWidget {
-        #         background-color: #2b2b2b;
-        #         border: 3px solid #444;
-        #         color: #eeeeee;
-        #         font: 12px "Segoe UI";
-        #         show-decoration-selected: 1;
-        #     }
-        # """)
         super().enterEvent(event)
-
-    # def leaveEvent(self, event):
-    #     """When mouse leaves widget"""
-    #     self.setStyleSheet("""
-    #         QTreeWidget::item {
-    #             background-color: #F0F8FF;
-    #         }
-    #         QTreeWidget::item:selected {
-    #             background-color: #F0F8FF;
-    #             color: black;
-    #         }
-    #     """)
-    #     super().leaveEvent(event)
 
 
     def tree_wid_itm_processed(self, tree_item):
@@ -289,8 +250,6 @@ class TreeWidget(QTreeWidget):
         # for dict_itm in folder_tree_data_lst:
         #     base_nm = list(dict_itm.keys())[0]
         #     path = dict_itm[base_nm]["path"]
-        #     print("base_nm --- ", base_nm)
-        #     print("path ---- ", path)
         #     tree_item = QTreeWidgetItem([base_nm, "Folder"]) 
         #     self.addTopLevelItem(tree_item)
         #     self.build_tree_view(path, tree_item)
@@ -330,7 +289,6 @@ class TreeItemClickWorkerPool(QRunnable):
 
 
 
-
 class View(QMainWindow):
     """
     Main application window for Asset Manager.
@@ -345,7 +303,6 @@ class View(QMainWindow):
         self.app = app
         self.setWindowTitle("Thumbnil Viewer")
         self.set_geometry(app)
-        # self.set_style_sheet()
         self._current_theme = "qdarkstyle"
 
         self.pixmap = None
@@ -355,11 +312,6 @@ class View(QMainWindow):
         self.scroll = QScrollArea()
         widget = QWidget() 
 
-        # widget.setStyleSheet("""
-        #     QWidget {
-        #         background-color: #595959
-        #     }
-        # """)
         self.mainvlay = QVBoxLayout()
         self.mainvlay.setContentsMargins(1, 1, 1, 1)
         self.splitter = QSplitter(Qt.Horizontal)
@@ -371,14 +323,12 @@ class View(QMainWindow):
         self.add_tree_wid()
         self.add_lst_wid()
         self.add_viewer_wid()
-        # self.set_menu_style_sheet()
 
         self.mainvlay.addWidget(self.splitter)
         self.splitter.setSizes([200, 300, 500])
 
 
     def set_style_sheet(self):
-        # color: #000000; 
         self.setStyleSheet("""
             background-color: #404040;
             border: none;                   
@@ -393,66 +343,6 @@ class View(QMainWindow):
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
 
-    def set_menu_style_sheet(self):
-        self.setStyleSheet("""
-            /* ---------------- QMenuBar ---------------- */
-            QMenuBar {
-                background-color: #333333;
-                color: #e6e6e6;
-                padding: 4px;
-                border-bottom: 1px solid #444;
-            }
-
-            QMenuBar::item {
-                background: transparent;
-                padding: 4px 12px;
-                margin: 4px 2px;
-                border-radius: 4px;
-            }
-
-            QMenuBar::item:selected {
-                background: #3d3d3d;
-                
-            }
-
-            QMenuBar::item:pressed {
-                background: #5a87f7;
-                color: white;
-            }
-
-            /* ---------------- QMenu (for QAction items) ---------------- */
-            QMenu {
-                background-color: #2b2b2b;
-                border: 1px solid #444;
-                border-radius: 6px;
-                padding: 6px;
-            }
-
-            QMenu::item {
-                background-color: transparent;
-                padding: 6px 24px;
-                margin: 2px;
-                border-radius: 4px;
-                color: #e6e6e6;
-            }
-
-            QMenu::item:selected {
-                background-color: #5a87f7;
-                color: white;
-            }
-
-            QMenu::item:disabled {
-                color: #666;
-            }
-
-            /* Menu separator */
-            QMenu::separator {
-                height: 1px;
-                background: #444;
-                margin: 4px 8px;
-            }
-        """)  
-
     def add_thumbnil_wid(self, thumbnil_wid_items_lst):
         """Add a list of thumbnail widgets to the list view."""
 
@@ -466,8 +356,6 @@ class View(QMainWindow):
 
         self.lst_wid.setSpacing(10)
 
-
-
     def clear_lst_wid(self):
         self.lst_wid.clear()
 
@@ -476,42 +364,10 @@ class View(QMainWindow):
         """Create menubar and menus (File, Edit, Preferences)."""
         menu = self.menuBar()
 
-        # File menu
-        # file_menu = menu.addMenu(" File ")
-
-        # self.open_file_action = QAction("Open File", self)
-        # self.open_folder_action = QAction("Open Folder", self)
-        # self.save_action = QAction("Save", self)
-        # self.save_as_action = QAction("Save As...", self)
-        # self.test = QAction("test...", self)
-
-        # file_menu.addAction(self.open_file_action)
-        # file_menu.addAction(self.open_folder_action)
-        # file_menu.addAction(self.save_action)
-        # file_menu.addAction(self.save_as_action)
-        # file_menu.addAction(self.test)
-
-        # # Edit menu
-        # file_menu = menu.addMenu("Edit")
-
-        # self.undo_action = QAction("Undo", self)
-        # self.redo_action = QAction("Redo", self)
-        # self.cut_action = QAction("Cut", self)
-        # self.copy_action = QAction("Copy", self)
-        # self.paste_action = QAction("Paste", self)
-
-        # file_menu.addAction(self.undo_action)
-        # file_menu.addAction(self.redo_action)
-        # file_menu.addAction(self.cut_action)
-        # file_menu.addAction(self.copy_action)
-        # file_menu.addAction(self.paste_action)
-
         # Preferences menu
         preferences_menu = menu.addMenu(" Preferences ")
         self.preferences_action = QAction("Configuration Settings", self)
-
         preferences_menu.addAction(self.preferences_action)
-
 
         # Theme Switcher menu
         theme_menu = menu.addMenu(" Theme Switcher ")
@@ -530,36 +386,23 @@ class View(QMainWindow):
         qt_material_menu.addAction(self.light_red_action)
         qt_material_menu.addAction(self.dark_purple_action)
 
-        # pip install qt-material
-        # from qt_material import apply_stylesheet
-        # apply_stylesheet(app, theme='dark_teal.xml')
-
-
-
-
         # ---------------------------------------
         # Default theme (qdarkstyle)
         # ---------------------------------------
         self.qdarkstyle_action = QAction("qdarkstyle", self)
         theme_menu.addAction(self.qdarkstyle_action)
-
-
-
-        # theme_menu.addMenu(qt_material_menu)
    
 
     def set_material_theme(self, theme):
         if getattr(self, "_current_theme", None) == theme:
             return
         self._current_theme = theme
-
         
         # CLEAR previous stylesheet
         self.app.setStyleSheet("")
 
         from qt_material import apply_stylesheet
         apply_stylesheet(self.app, theme=theme)
-
 
     def set_qdarkstyle_theme(self):
         if self._current_theme == "qdarkstyle":
@@ -572,10 +415,6 @@ class View(QMainWindow):
 
         # Reapply qdarkstyle
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyside2())
-
-
-
-
 
     def add_tree_wid(self):
         """Add the tree widget to the splitter."""
@@ -601,7 +440,6 @@ class View(QMainWindow):
         self.lst_wid = QListWidget()
         self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
         
-        # background-color: #2b2b2b;
         self.lst_wid.setStyleSheet("""
             QListWidget {             
                   
@@ -633,11 +471,6 @@ class View(QMainWindow):
         self.tab_wid = QTabWidget()
 
         self.tab_wid.addTab(self.create_viewer_tab(), "Viewer")
-        # self.tab_wid.addTab(self.create_viewer_tab("metatab"), "Meta Data")
-        # self.tab_wid.setStyleSheet("""                                        
-        #         background-color: #2b2b2b;             
-        #         background: #2b2b2b;   /* background inside tab widget */ 
-        # """)
    
         tab_vlay.addWidget(self.tab_wid)
         right_vlay.addLayout(tab_vlay)    
@@ -762,7 +595,6 @@ class View(QMainWindow):
 
 
         prefs_window = PreferencesDialog(existing_prefs_data, self)
-        # prefs_window.setStyleSheet(dialog_style)
         if prefs_window:
             prefs_window.show()
 

@@ -96,11 +96,8 @@ class Model():
         folder_tree_data_lst = []
         for url in drop_urls:
             url_path = url.toLocalFile() 
-            print("path --- ", url_path)
             if self.drive == None:
                 self.drive = re.split(r"[\\/]", url_path)[0]
-                print("self.drive 0000 ", self.drive)
-
             tree_name = re.split(r"[\\/]", url_path)[-1]
 
             if os.path.isdir(url_path):
@@ -108,7 +105,6 @@ class Model():
 
                     folder_tree_data_dict = self.fetch_folder_tree_data(url_path)
                     folder_tree_data_lst.append({tree_name:folder_tree_data_dict})
-   
 
             #         # ----------------------------------------------------------
             #         # This is working code without thread
@@ -121,16 +117,6 @@ class Model():
                     print("Directory check complete: no content found.")
             else:
                 print("This is not directory path")
-                # event.ignore()
-
-        
-        # folder_structure_dir = r"E:\temp\folder_structure\folder_structure_data.json"
-
-        # with open(folder_structure_dir, "w", encoding="utf-8") as f:
-        #     json.dump(folder_tree_data_lst, f, indent=4)
-
-        # print("Folder structure saved to folder_structure.json")
-
 
         return folder_tree_data_lst
 
@@ -171,13 +157,8 @@ class Model():
         with open(con.CONFIG_FILEPATH, "r") as rd:
             config_data = json.load(rd)
 
-        print("selected_proj --- ", selected_proj)
         raw_ext_dict = config_data[selected_proj]['extension']
         supported_ext_lst = []
-
-
-        print("raw_ext_dict type --- ", type(raw_ext_dict))
-        print("raw_ext_dict ---- ", raw_ext_dict)
         
         for ext_key in raw_ext_dict.keys():
             if raw_ext_dict[ext_key] == True:
@@ -223,7 +204,6 @@ class Model():
                     is_available_in_dir = True                
 
                 for file_name in os.listdir(self.thumbnil_dir_path):
-                    print("file_name --- ", file_name)
                     if file_name.lower().endswith(ext_tuple):
                         thumbnil_data_dict = self.get_thumb_data_dict(file_name, is_thumb_dir=True)
                         thumbnil_data_dict_lst.append(thumbnil_data_dict)
@@ -284,32 +264,6 @@ class Model():
 
         return thumbnil_data_dict
             
-    def get_file_data(self):
-        return "file has been opened"
-
-    def get_folder_data(self):
-        return "Folder has been opened"
-    
-    def save_execute(self):
-        return "file has been saved"
-    
-    def save_as_execute(self):
-        return "file has been save as"
-
-    def undo_operation(self):
-        return "Undo last operation"
-
-    def redo_operation(self):
-        return "Redo last operation"
-    
-    def cut_operation(self):
-        return "Cut operation"
-    
-    def copy_operation(self):
-        return "Copy operation"
-
-    def paste_operation(self):
-        return "Paste Operation"
 
     def get_current_preferences(self):
         try:
@@ -342,27 +296,10 @@ class Model():
             else:
                 data[selected_proj]["extension"][ext_item] = False
 
-
         with open(con.CONFIG_FILEPATH, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Updated extensions for {selected_proj}: {new_extensions}")
 
-    # def get_meta(self, path):
-    #     # print("*****"*10)
-    #     # print("working in get meta function")
-    #     # print("*****"*10)
-    #     proc = subprocess.Popen(
-    #         [str(con.NUKE_EXE), "-t", str(con.NUKE_OP_PATH), str(path)],
-    #         stdout=subprocess.PIPE,
-    #         stderr=subprocess.PIPE,
-    #         text=True
-    #     )
-
-    #     stdout, stderr = proc.communicate()
-        
-    #     print("RETURN CODE:", proc.returncode)
-    #     print("STDOUT:\n", stdout)
-    #     print("STDERR:\n", stderr)
 
     
 

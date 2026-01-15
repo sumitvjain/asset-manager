@@ -3,7 +3,6 @@ import os
 import json
 
 
-
 con = constant.Constant()
 
 def create_json_file(app_dir_path):
@@ -35,9 +34,7 @@ def create_json_file(app_dir_path):
 
         with open(jsn_fle_pth, "w") as json_file:
             json.dump(project, json_file, indent=4)
-    print("config file created ----------- ", jsn_fle_pth)
  
-
 
 def setup_config():
     """

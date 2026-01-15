@@ -1,14 +1,6 @@
 from qt_lib.qt_compact import *
 
 
-# from config import constant
-
-# con = constant.Constant()
-
-
-
-
-
 class Controller(QObject):
     """
     Controller class acts as a mediator between the Model and View.
@@ -19,7 +11,7 @@ class Controller(QObject):
     - Controls project preferences and configuration updates.
     """
 
-    def __init__(self, model, view, nuke_operation):
+    def __init__(self, model, view):
 
         """
         Initialize Controller.
@@ -32,7 +24,6 @@ class Controller(QObject):
         super().__init__()
         self.model = model
         self.view = view
-        self.nuke_operation = nuke_operation
         self.zoom_factor = 1.0
         self.signal_slot()
         self.view.tab_wid.setFocusPolicy(Qt.StrongFocus)
@@ -44,19 +35,6 @@ class Controller(QObject):
         """
         Connects UI signals to controller methods.
         """
-
-        # File menu actions
-        # self.view.open_file_action.triggered.connect(self.open_file)
-        # self.view.open_folder_action.triggered.connect(self.open_folder)
-        # self.view.save_action.triggered.connect(self.save_file)
-        # self.view.save_as_action.triggered.connect(self.save_as_file)
-
-        # # Edit menu actions
-        # self.view.undo_action.triggered.connect(self.undo_last_action)
-        # self.view.redo_action.triggered.connect(self.redo_last_action)
-        # self.view.cut_action.triggered.connect(self.cut_selected_item)
-        # self.view.copy_action.triggered.connect(self.copy_selected_item)
-        # self.view.paste_action.triggered.connect(self.paste_item)
 
         # Preference menu actions
         self.view.preferences_action.triggered.connect(self.preferences_clicked)
@@ -89,7 +67,6 @@ class Controller(QObject):
         """
         proj_code = self.prefs_window.get_current_project_code()
         ext_list = self.model.fetch_project_extensions(proj_code)
-        print("ext_list ---- ", ext_list)
         
         self.prefs_window.set_extension_lst(ext_list)
 
@@ -99,13 +76,11 @@ class Controller(QObject):
         Saves updated extensions for selected project.
         """
         new_extensions = self.prefs_window.get_checked_extension()
-        print("new_extensions --- ", new_extensions)
         selected_proj = self.prefs_window.proj_combo.currentText() 
         self.model.overwrite_config(new_extensions, selected_proj)
 
 
     def on_lst_wid_double_clicked(self, img_data_dict):
-        # print('img_data_dict --- ', img_data_dict)
         path = img_data_dict["image_full_path"]
         
         self.view.load_render_in_viewer(path)
@@ -207,21 +182,6 @@ class Controller(QObject):
         if self.action:
             self.action_clicked(self.action, pos)
 
-    # def get_meta(self, path):
-    #     proc = subprocess.Popen(
-    #         [str(con.NUKE_EXE), "-t", str(con.NUKE_OP_PATH), str(path)],
-    #         stdout=subprocess.PIPE,
-    #         stderr=subprocess.PIPE,
-    #         text=True
-    #     )
-
-    #     stdout, stderr = proc.communicate()
-        
-    #     print("RETURN CODE:", proc.returncode)
-    #     print("STDOUT:\n", stdout)
-    #     print("STDERR:\n", stderr)
-
-
     def action_clicked(self, invoked_action, pos):
         """
         Handle action clicked from thumbnail context menu.
@@ -232,22 +192,9 @@ class Controller(QObject):
         """
         if invoked_action.text() == "Load in Viewer":
             result, path = self.model.get_invoked_action_path(invoked_action)
-            print("result --- ", result)
-            print("path --- ", path)
             if result:
                 self.view.load_render_in_viewer(path)
                 self.update_image_size()
-
-                # self.view.show_notification("Successfully loaded into viewer.")
-                # Need to add code here for meta data login(calling from here)
-                # meta_data_dict = self.nuke_operation.get_meta_data(path) temporary off
-                # self.model.get_meta(path)
-
-                print("*************** meta_data_dict ***************")
-                # from pprint import pprint
-                # pprint(meta_data_dict)
-
-
             else:
                 self.view.show_notification(f"No [' {invoked_action.text()}' ] file was found.")
 
@@ -320,13 +267,6 @@ class Controller(QObject):
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation
             )
-            # print('scaled_pixmap height ---- ', scaled_pixmap.height())
-            # print('scaled_pixmap width ---- ', scaled_pixmap.width())
-            # scaled_pixmap height ----  427
-            # scaled_pixmap width ----  763
-            # scaled_pixmap height ----  633
-            # scaled_pixmap width ----  1017
-
 
             max_height = 428
             max_width = 764
@@ -344,57 +284,12 @@ class Controller(QObject):
                 self.view.tab_view_lbl.setPixmap(fitted_pixmap)
 
 
-
-                # print('---'*25)
-                # print('image size is not match ')
-                # print('scaled_pixmap height ---- ', scaled_pixmap.height())
-                # print('scaled_pixmap width ---- ', scaled_pixmap.width())
-                # print('---'*25)
-
-    # ---------------- Menu Actions (File/Edit) ---------------- #
-    # def open_file(self):
-    #     msg = self.model.get_file_data()
-    #     print(msg)
-
-    # def open_folder(self):
-    #     msg = self.model.get_folder_data()
-    #     print(msg)
-
-    # def save_file(self):
-    #     msg = self.model.save_execute()
-    #     print(msg)
-
-    # def save_as_file(self):
-    #     msg = self.model.save_as_execute()
-    #     print(msg)
-
-    # def undo_last_action(self):
-    #     msg = self.model.undo_operation()
-    #     print(msg)
-
-    # def redo_last_action(self):
-    #     msg = self.model.redo_operation()
-    #     print(msg)
-
-    # def cut_selected_item(self):
-    #     msg = self.model.cut_operation()
-    #     print(msg)
-
-    # def copy_selected_item(self):
-    #     msg = self.model.copy_operation()
-    #     print(msg)
-
-    # def paste_item(self):
-    #     msg = self.model.paste_operation()
-    #     print(msg)
-
     def preferences_clicked(self):
         """
         Handle 'Preferences' action.
         Opens preferences dialog and sets up signal connections.
         """
         existing_prefs_data = self.model.get_current_preferences()
-        print("existing_prefs_data -- ", existing_prefs_data)
         self.prefs_window = self.view.open_pref_dialog(existing_prefs_data)   
         self.prefs_window.proj_combo.currentIndexChanged.connect(self.proj_combo_index_changed)
         self.prefs_window.update_btn.clicked.connect(self.update_btn_clicked) 
