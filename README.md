@@ -1,6 +1,6 @@
-# 🎬 Asset Manager
+# 🎬 Thumbnails-Viewer
 
-A Python-based **Asset Manager** designed for VFX/Animation pipelines.  
+A Python-based **Thumbnails-Viewer** designed for VFX/Animation pipelines.  
 It provides a simple interface to browse, organize, and preview assets such as images, sequences, and videos.  
 
 The project uses **PySide2 (Qt for Python)** for the UI and supports customizable project configurations via JSON.
@@ -11,8 +11,8 @@ The project uses **PySide2 (Qt for Python)** for the UI and supports customizabl
 - 📂 Drag-and-drop support for files and folders  
 - 🖼️ Thumbnail previews of supported media files (`exr`, `jpg`, `jpeg`, `png`, `mov`)  
 - 📑 Project-based extension filtering (customizable per project)  
-- ⚡ Zoom in/out functionality on the preview tab  
-- 🔄 Undo/Redo, Copy/Paste, and Remove asset actions  
+- ⚡ Zoom in/out functionality on the preview tab (Using mouse-middle button and keyboard minus,plus button) 
+- 🔄 Load, Remove context menu actions for thumbnil widgets in list  
 - ⚙️ Preferences dialog to update project configurations  
 - 📝 Config file auto-generated on first launch  
 
@@ -98,7 +98,6 @@ asset-manager/
 3. The **Tree widget** displays the folder structure → click an item to view thumbnails  
 4. Right-click thumbnails to access options:  
    - **Load in Viewer**  
-   - **Compare** (two items)  
    - **Remove**  
 
 ---
