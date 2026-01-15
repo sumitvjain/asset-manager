@@ -477,17 +477,19 @@ class View(QMainWindow):
         menu = self.menuBar()
 
         # File menu
-        file_menu = menu.addMenu(" File ")
+        # file_menu = menu.addMenu(" File ")
 
-        self.open_file_action = QAction("Open File", self)
-        self.open_folder_action = QAction("Open Folder", self)
-        self.save_action = QAction("Save", self)
-        self.save_as_action = QAction("Save As...", self)
+        # self.open_file_action = QAction("Open File", self)
+        # self.open_folder_action = QAction("Open Folder", self)
+        # self.save_action = QAction("Save", self)
+        # self.save_as_action = QAction("Save As...", self)
+        # self.test = QAction("test...", self)
 
-        file_menu.addAction(self.open_file_action)
-        file_menu.addAction(self.open_folder_action)
-        file_menu.addAction(self.save_action)
-        file_menu.addAction(self.save_as_action)
+        # file_menu.addAction(self.open_file_action)
+        # file_menu.addAction(self.open_folder_action)
+        # file_menu.addAction(self.save_action)
+        # file_menu.addAction(self.save_as_action)
+        # file_menu.addAction(self.test)
 
         # # Edit menu
         # file_menu = menu.addMenu("Edit")
