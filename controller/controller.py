@@ -38,22 +38,22 @@ class Controller(QObject):
 
         # Preference menu actions
         self.view.preferences_action.triggered.connect(self.preferences_clicked)
+        self.view.about_action.triggered.connect(self.show_about)
 
-        # Theme Switcher menu action
-        self.view.dark_teal_action.triggered.connect(
-            lambda: self.view.set_material_theme('dark_teal.xml'))
-        self.view.dark_blue_action.triggered.connect(
-            lambda: self.view.set_material_theme('dark_blue.xml'))
-        self.view.light_blue_action.triggered.connect(
-            lambda: self.view.set_material_theme('light_blue.xml'))
-        self.view.light_red_action.triggered.connect(
-            lambda: self.view.set_material_theme('light_red.xml'))
-        self.view.dark_purple_action.triggered.connect(
-            lambda: self.view.set_material_theme('dark_purple.xml'))
+        # # Theme Switcher menu action
+        # self.view.dark_teal_action.triggered.connect(
+        #     lambda: self.view.set_material_theme('dark_teal.xml'))
+        # self.view.dark_blue_action.triggered.connect(
+        #     lambda: self.view.set_material_theme('dark_blue.xml'))
+        # self.view.light_blue_action.triggered.connect(
+        #     lambda: self.view.set_material_theme('light_blue.xml'))
+        # self.view.light_red_action.triggered.connect(
+        #     lambda: self.view.set_material_theme('light_red.xml'))
+        # self.view.dark_purple_action.triggered.connect(
+        #     lambda: self.view.set_material_theme('dark_purple.xml'))
 
-
-        # Default theme (qdarkstyle)
-        self.view.qdarkstyle_action.triggered.connect(self.view.set_qdarkstyle_theme)
+        # # Default theme (qdarkstyle)
+        # self.view.qdarkstyle_action.triggered.connect(self.view.set_qdarkstyle_theme)
 
         # Tree widget actions
         self.view.tree_wid.itemClicked.connect(self.on_item_clicked)
@@ -296,7 +296,10 @@ class Controller(QObject):
         self.prefs_window.close_btn.clicked.connect(self.prefs_window.close)
 
 
+    def show_about(self):
+        self.view.show_about_info()
 
+  
 
 
 

@@ -35,18 +35,26 @@ class PreferencesDialog(QDialog):
         self.add_widgets()
         self.setLayout(self.dialog_vlay)
 
-
     def add_widgets(self):
         """Create and add all widgets (labels, combobox, buttons) to the dialog."""
+
+        lbl_info = QLabel("Manage project-specific extensions settings")
+        self.dialog_vlay.addWidget(lbl_info)
+        
+        divider = QFrame()
+        divider.setFrameShape(QFrame.HLine)
+        divider.setFrameShadow(QFrame.Sunken)
+        self.dialog_vlay.addWidget(divider)
+
         hbox_lay_01 = QHBoxLayout()     
         proj_lbl = QLabel("Project:")
         self.proj_combo = QComboBox()      
         existing_prefs_proj_lst = list(self.existing_prefs_data.keys())
         self.proj_combo.addItems(['-- Select Project --'] + existing_prefs_proj_lst)
         
-
         hbox_lay_01.addWidget(proj_lbl)
         hbox_lay_01.addWidget(self.proj_combo)
+        
         self.dialog_vlay.addLayout(hbox_lay_01)
 
         self.lst_wid = QListWidget()
@@ -59,7 +67,6 @@ class PreferencesDialog(QDialog):
         self.close_btn = QPushButton("Close")
         icon = QApplication.style().standardIcon(QStyle.SP_DialogCloseButton)
         self.close_btn.setIcon(icon)
-
 
         self.update_btn = QPushButton("Update")
         icon = QApplication.style().standardIcon(QStyle.SP_DialogOkButton)
@@ -303,7 +310,7 @@ class View(QMainWindow):
         self.app = app
         self.setWindowTitle("Thumbnil Viewer")
         self.set_geometry(app)
-        self._current_theme = "qdarkstyle"
+        # self._current_theme = "qdarkstyle"
 
         self.pixmap = None
         self.lbl_thumb_path = None
@@ -369,52 +376,61 @@ class View(QMainWindow):
         self.preferences_action = QAction("Configuration Settings", self)
         preferences_menu.addAction(self.preferences_action)
 
-        # Theme Switcher menu
-        theme_menu = menu.addMenu(" Theme Switcher ")
-        
-        qt_material_menu = theme_menu.addMenu('Qt - Material')
-        
-        self.dark_teal_action = QAction('dark_teal', self)
-        self.dark_blue_action = QAction('dark_blue', self)
-        self.light_blue_action = QAction('light_blue', self)
-        self.light_red_action = QAction('light_red', self)
-        self.dark_purple_action = QAction('dark_purple', self)
 
-        qt_material_menu.addAction(self.dark_teal_action)
-        qt_material_menu.addAction(self.dark_blue_action)
-        qt_material_menu.addAction(self.light_blue_action)
-        qt_material_menu.addAction(self.light_red_action)
-        qt_material_menu.addAction(self.dark_purple_action)
+        # =========================
+        # HELP MENU
+        # =========================
+        help_menu = menu.addMenu("Help")
+        self.about_action = QAction("About", self)
+        help_menu.addAction(self.about_action)
 
-        # ---------------------------------------
-        # Default theme (qdarkstyle)
-        # ---------------------------------------
-        self.qdarkstyle_action = QAction("qdarkstyle", self)
-        theme_menu.addAction(self.qdarkstyle_action)
+
+        # # Theme Switcher menu
+        # theme_menu = menu.addMenu(" Theme Switcher ")
+        
+        # qt_material_menu = theme_menu.addMenu('Qt - Material')
+        
+        # self.dark_teal_action = QAction('dark_teal', self)
+        # self.dark_blue_action = QAction('dark_blue', self)
+        # self.light_blue_action = QAction('light_blue', self)
+        # self.light_red_action = QAction('light_red', self)
+        # self.dark_purple_action = QAction('dark_purple', self)
+
+        # qt_material_menu.addAction(self.dark_teal_action)
+        # qt_material_menu.addAction(self.dark_blue_action)
+        # qt_material_menu.addAction(self.light_blue_action)
+        # qt_material_menu.addAction(self.light_red_action)
+        # qt_material_menu.addAction(self.dark_purple_action)
+
+        # # ---------------------------------------
+        # # Default theme (qdarkstyle)
+        # # ---------------------------------------
+        # self.qdarkstyle_action = QAction("qdarkstyle", self)
+        # theme_menu.addAction(self.qdarkstyle_action)
    
 
-    def set_material_theme(self, theme):
-        if getattr(self, "_current_theme", None) == theme:
-            return
-        self._current_theme = theme
+    # def set_material_theme(self, theme):
+    #     if getattr(self, "_current_theme", None) == theme:
+    #         return
+    #     self._current_theme = theme
         
-        # CLEAR previous stylesheet
-        self.app.setStyleSheet("")
+    #     # CLEAR previous stylesheet
+    #     self.app.setStyleSheet("")
 
-        from qt_material import apply_stylesheet
-        apply_stylesheet(self.app, theme=theme)
+    #     from qt_material import apply_stylesheet
+    #     apply_stylesheet(self.app, theme=theme)
 
-    def set_qdarkstyle_theme(self):
-        if self._current_theme == "qdarkstyle":
-            return
+    # def set_qdarkstyle_theme(self):
+    #     if self._current_theme == "qdarkstyle":
+    #         return
 
-        self._current_theme = "qdarkstyle"
+    #     self._current_theme = "qdarkstyle"
 
-        # CLEAR material stylesheet
-        self.app.setStyleSheet("")
+    #     # CLEAR material stylesheet
+    #     self.app.setStyleSheet("")
 
-        # Reapply qdarkstyle
-        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyside2())
+    #     # Reapply qdarkstyle
+    #     self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyside2())
 
     def add_tree_wid(self):
         """Add the tree widget to the splitter."""
@@ -428,24 +444,24 @@ class View(QMainWindow):
         lst_vlay.setContentsMargins(1,1,1,1)
 
         self.lbl_thumb_path = QLabel('')
-        self.lbl_thumb_path.setStyleSheet("""
-            QLabel {
-                color: white;                
-                background-color: #333333;        
-                padding: 5px;               
-                border-radius: 3px;    
-            }       
-        """)
+        # self.lbl_thumb_path.setStyleSheet("""
+        #     QLabel {
+        #         color: white;                
+        #         background-color: #333333;        
+        #         padding: 5px;               
+        #         border-radius: 3px;    
+        #     }       
+        # """)
 
         self.lst_wid = QListWidget()
         self.lst_wid.setSelectionMode(QListWidget.ExtendedSelection)
         
-        self.lst_wid.setStyleSheet("""
-            QListWidget {             
+        # self.lst_wid.setStyleSheet("""
+        #     QListWidget {             
                   
-                border: 3px solid #444;          
-            }       
-        """)
+        #         border: 3px solid #444;          
+        #     }       
+        # """)
 
         lst_vlay.addWidget(self.lbl_thumb_path)
         lst_vlay.addWidget(self.lst_wid)
@@ -502,96 +518,96 @@ class View(QMainWindow):
 
     def open_pref_dialog(self, existing_prefs_data):
 
-        dialog_style = """
-            QDialog {
-                background-color: #2b2b2b;
-                color: #f0f0f0;
-                font-family: "Segoe UI", Arial, sans-serif;
-                font-size: 12px;
-            }
+        # dialog_style = """
+        #     QDialog {
+        #         background-color: #2b2b2b;
+        #         color: #f0f0f0;
+        #         font-family: "Segoe UI", Arial, sans-serif;
+        #         font-size: 12px;
+        #     }
 
-            /* QLabel */
-            QLabel {
-                color: #f0f0f0;
-                font-size: 12px;
-                padding: 2px;
-            }
+        #     /* QLabel */
+        #     QLabel {
+        #         color: #f0f0f0;
+        #         font-size: 12px;
+        #         padding: 2px;
+        #     }
 
-            /* QComboBox */
-            QComboBox {
-                background-color: #3a3a3a;
-                color: #f0f0f0;
-                border: 1px solid #555;
-                padding: 4px;
-                border-radius: 3px;
-            }
-            QComboBox:hover {
-                border: 1px solid #888;
-            }
-            QComboBox::drop-down {
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 20px;
-                border-left: 1px solid #555;
-                background-color: #444;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2b2b2b;
-                selection-background-color: #555;
-                selection-color: white;
-            }
+        #     /* QComboBox */
+        #     QComboBox {
+        #         background-color: #3a3a3a;
+        #         color: #f0f0f0;
+        #         border: 1px solid #555;
+        #         padding: 4px;
+        #         border-radius: 3px;
+        #     }
+        #     QComboBox:hover {
+        #         border: 1px solid #888;
+        #     }
+        #     QComboBox::drop-down {
+        #         subcontrol-origin: padding;
+        #         subcontrol-position: top right;
+        #         width: 20px;
+        #         border-left: 1px solid #555;
+        #         background-color: #444;
+        #     }
+        #     QComboBox QAbstractItemView {
+        #         background-color: #2b2b2b;
+        #         selection-background-color: #555;
+        #         selection-color: white;
+        #     }
 
-            /* QListWidget */
-            QListWidget {
-                background-color: #333;
-                color: #f0f0f0;
-                border: 1px solid #555;
-                padding: 2px;
-            }
-            QListWidget::item {
-                padding: 4px;
-            }
-            QListWidget::item:selected {
-                background-color: #555;
-                color: white;
-            }
+        #     /* QListWidget */
+        #     QListWidget {
+        #         background-color: #333;
+        #         color: #f0f0f0;
+        #         border: 1px solid #555;
+        #         padding: 2px;
+        #     }
+        #     QListWidget::item {
+        #         padding: 4px;
+        #     }
+        #     QListWidget::item:selected {
+        #         background-color: #555;
+        #         color: white;
+        #     }
 
-            /* Checkable QListWidgetItem */
-            QListWidget::indicator {
-                width: 14px;
-                height: 14px;
-            }
-            QListWidget::indicator:unchecked {
-                border: 1px solid #aaa;
-                background-color: #444;
-            }
-            QListWidget::indicator:checked {
-                border: 1px solid #5a9;
-                background-color: #2e8b57;
-            }
+        #     /* Checkable QListWidgetItem */
+        #     QListWidget::indicator {
+        #         width: 14px;
+        #         height: 14px;
+        #     }
+        #     QListWidget::indicator:unchecked {
+        #         border: 1px solid #aaa;
+        #         background-color: #444;
+        #     }
+        #     QListWidget::indicator:checked {
+        #         border: 1px solid #5a9;
+        #         background-color: #2e8b57;
+        #     }
 
-            /* QPushButton */
-            QPushButton {
-                background-color: #444;
-                color: #f0f0f0;
-                border: 1px solid #666;
-                padding: 6px 10px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #555;
-                border: 1px solid #888;
-            }
-            QPushButton:pressed {
-                background-color: #222;
-                border: 1px solid #888;
-            }
-            QPushButton:disabled {
-                background-color: #333;
-                color: #777;
-                border: 1px solid #444;
-        }
-        """
+        #     /* QPushButton */
+        #     QPushButton {
+        #         background-color: #444;
+        #         color: #f0f0f0;
+        #         border: 1px solid #666;
+        #         padding: 6px 10px;
+        #         border-radius: 4px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #555;
+        #         border: 1px solid #888;
+        #     }
+        #     QPushButton:pressed {
+        #         background-color: #222;
+        #         border: 1px solid #888;
+        #     }
+        #     QPushButton:disabled {
+        #         background-color: #333;
+        #         color: #777;
+        #         border: 1px solid #444;
+        # }
+        # """
 
 
         prefs_window = PreferencesDialog(existing_prefs_data, self)
@@ -608,4 +624,63 @@ class View(QMainWindow):
 
     def remove_selected(self, widget):
         self.lst_wid.takeItem(widget)
+       
+    def show_about_info(self):
+        # HTML version of your help text
+        help_text = """
+        <h2>📝 How to Thumbnails-Viewer Application</h2>
 
+        <h3>1. Load Images</h3>
+        <ul>
+            <li>Drag and drop a <b>folder</b> into the <b>left-side of the window screen</b>.</li>
+        </ul>
+        <p><i>Tip:</i> Only directories with supported image formats will display thumbnails.</p>
+
+        <h3>2. Preview Thumbnails</h3>
+        <ul>
+            <li>The <b>center widget</b> displays thumbnails-information for all images in the selected folder.</li>
+            <li>Each thumbnail shows:
+                <ul>
+                    <li>Image Name</li>
+                    <li>Project Code</li>
+                    <li>Short Code</li>
+                </ul>
+            </li>
+        </ul>
+        <p><i>Tip:</i> Scroll through the list to view all images in the folder.</p>
+
+        <h3>3. View Images</h3>
+        <ul>
+            <li>Double-click a thumbnail to open it in the <b>Viewer tab</b>.</li>
+            <li>Zoom options:
+                <ul>
+                    <li>Mouse scroll wheel → Scale image up or down</li>
+                    <li>Keyboard → Press <b>+</b> to zoom in, <b>-</b> to zoom out</li>
+                </ul>
+            </li>
+            <li>Alternative: Right-click a thumbnail → Load in Viewer</li>
+        </ul>
+        <p><i>Tip:</i> The Viewer tab keeps your images centered and scalable for detailed inspection.</p>
+
+        <h3>4. Remove Images</h3>
+        <ul>
+            <li>Select one or more thumbnails.</li>
+            <li>Right click on thumbnail and click on <b>Remove</b> button to delete them from the widget.</li>
+        </ul>
+        <p><i>Tip:</i> Removing images from the list does not delete them from your disk.</p>
+
+        <h3>5. Configure Project Preferences</h3>
+        <ol>
+            <li>Click the <b>Preferences</b> menu → Configuration Setting Action.</li>
+            <li>The Application Preferences dialog opens.</li>
+            <li>Select the project you want to configure.</li>
+            <li>Check the boxes for the desired <b>file extensions</b>.</li>
+            <li>Click <b>Update</b>, then <b>Close</b> to save your settings.</li>
+            <li>After updating, reselect the folder to reload thumbnails with updated preferences.</li>
+        </ol>
+        <p><i>Tip:</i> This allows you to filter which file types appear for each project.</p>
+
+        <p><b>Pro Tip:</b> Always update preferences before loading a folder. Use the Viewer tab to inspect images without changing your thumbnail list.</p>
+        """
+
+        QMessageBox.about(self, "Application Help", help_text)
