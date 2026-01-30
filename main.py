@@ -63,3 +63,4 @@ if __name__ == "__main__":
 
 #######################
 
+  # Run using --> pyinstaller --onefile main.py
